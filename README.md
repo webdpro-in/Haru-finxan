@@ -35,7 +35,8 @@ Finxan AI is designed to provide an immersive, teacher-like learning experience 
 ## Features
 
 - 🎙️ **Real-time voice interaction** - Continuous listening with 1-second pause detection
-- 🎭 **Animated AI teacher** - Live2D character with 27 motion animations and lip-sync
+- 🗣️ **Multilingual High-Fidelity Audio** - Powered natively by Sarvam AI TTS for pristine audio across English and regional Indian languages
+- 🎭 **Teacher-Grade Synced Animations** - Intelligent Live2D coordination pipeline dynamically maps hand gestures, lip-sync, and eye-tracking perfectly timed to individual spoken sentences
 - 🧠 **Multi-provider AI support** - OpenAI, Google Gemini, Anthropic Claude, or custom APIs
 - 🖼️ **Visual learning** - Automatic image search and contextual explanations
 - 🔐 **Secure authentication** - Google OAuth 2.0 with session management
@@ -126,8 +127,9 @@ Finxan AI is designed to provide an immersive, teacher-like learning experience 
 - OpenAI GPT-4o
 - Google Gemini 2.0 Flash
 - Anthropic Claude 3
+- Sarvam AI (High-Quality Multilingual Indian TTS)
 - AWS Bedrock
-- AWS Polly (TTS)
+- AWS Polly (TTS Fallback)
 - AWS Transcribe (STT)
 
 **Tools & Platforms**
@@ -261,7 +263,7 @@ finxan-ai/
 
 ## Future Improvements
 
-- Multi-language voice support (50+ languages)
+- Expanded Global multi-language voice support (currently supports Indian dialects seamlessly via Sarvam)
 - Adaptive learning and interactive quizzes
 - Mobile applications (iOS & Android)
 - Custom character support and personality customization
