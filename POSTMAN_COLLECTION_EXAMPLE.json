@@ -1,0 +1,428 @@
+{
+  "info": {
+    "name": "FinxanAI Platform API",
+    "description": "Complete API collection for FinxanAI educational platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "student_id",
+      "value": "student_123",
+      "type": "string"
+    },
+    {
+      "key": "classroom_id",
+      "value": "class_456",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Student API",
+      "item": [
+        {
+          "name": "Start Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{student_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/student/session/start",
+              "host": ["{{base_url}}"],
+              "path": ["api", "student", "session", "start"]
+            }
+          }
+        },
+        {
+          "name": "End Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{session_id}}\",\n  \"studentId\": \"{{student_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/student/session/end",
+              "host": ["{{base_url}}"],
+              "path": ["api", "student", "session", "end"]
+            }
+          }
+        },
+        {
+          "name": "Submit Anonymous Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{student_id}}\",\n  \"classroomId\": \"{{classroom_id}}\",\n  \"question\": \"I don't understand photosynthesis\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/student/anonymous-question",
+              "host": ["{{base_url}}"],
+              "path": ["api", "student", "anonymous-question"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Teacher API",
+      "item": [
+        {
+          "name": "Get Classroom Students",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/teacher/class/{{classroom_id}}/students",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "class", "{{classroom_id}}", "students"]
+            }
+          }
+        },
+        {
+          "name": "Get Student Profile",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/teacher/student/{{student_id}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "student", "{{student_id}}", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Get Class Heatmap",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/teacher/classroom/{{classroom_id}}/heatmap",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "classroom", "{{classroom_id}}", "heatmap"]
+            }
+          }
+        },
+        {
+          "name": "Get Risk Alerts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/teacher/classroom/{{classroom_id}}/risk-alerts?acknowledged=false",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "classroom", "{{classroom_id}}", "risk-alerts"],
+              "query": [
+                {
+                  "key": "acknowledged",
+                  "value": "false"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Acknowledge Risk Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": \"teacher_123\",\n  \"notes\": \"Scheduled intervention meeting\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/risk-alert/{{prediction_id}}/acknowledge",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "risk-alert", "{{prediction_id}}", "acknowledge"]
+            }
+          }
+        },
+        {
+          "name": "Answer Anonymous Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answer\": \"Photosynthesis is the process by which plants convert light energy into chemical energy...\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/anonymous-question/{{question_id}}/answer",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "anonymous-question", "{{question_id}}", "answer"]
+            }
+          }
+        },
+        {
+          "name": "Generate Lesson Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"classroomId\": \"{{classroom_id}}\",\n  \"subject\": \"Biology\",\n  \"topic\": \"Photosynthesis\",\n  \"duration\": 60,\n  \"grade\": 8\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/lesson-plan/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "lesson-plan", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Approve Lesson Plan",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/teacher/lesson-plan/{{lesson_id}}/approve",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "lesson-plan", "{{lesson_id}}", "approve"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Parent API",
+      "item": [
+        {
+          "name": "Get Parent Dashboard",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/parent/{{parent_id}}/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parent", "{{parent_id}}", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Get Child Daily Report",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/parent/{{parent_id}}/child/{{student_id}}/report?date=2024-01-15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "parent", "{{parent_id}}", "child", "{{student_id}}", "report"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2024-01-15"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat & AI",
+      "item": [
+        {
+          "name": "Send Chat Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"How does photosynthesis work?\",\n  \"studentId\": \"{{student_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Voice API",
+      "item": [
+        {
+          "name": "Synthesize Speech",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Hello! Ready to learn?\",\n  \"voiceId\": \"Joanna\",\n  \"languageCode\": \"en-US\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/synthesize",
+              "host": ["{{base_url}}"],
+              "path": ["api", "synthesize"]
+            }
+          }
+        },
+        {
+          "name": "Transcribe Audio",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/audio.mp3"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/transcribe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transcribe"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Image API",
+      "item": [
+        {
+          "name": "Search Images",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"photosynthesis diagram\",\n  \"count\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/images/search",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "search"]
+            }
+          }
+        },
+        {
+          "name": "Generate Image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Diagram showing the process of photosynthesis with labeled parts\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/images/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "images", "generate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "WhatsApp API",
+      "item": [
+        {
+          "name": "Subscribe to Reports",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentId\": \"{{parent_id}}\",\n  \"phoneNumber\": \"+1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/whatsapp/subscribe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "whatsapp", "subscribe"]
+            }
+          }
+        },
+        {
+          "name": "Get WhatsApp Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/whatsapp/status/{{parent_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "whatsapp", "status", "{{parent_id}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

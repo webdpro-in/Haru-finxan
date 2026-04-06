@@ -33,16 +33,44 @@ npm start
 ## 📋 Environment Variables
 
 Required:
-- `AI_PROVIDER` - AI provider to use (openai, gemini, aws-bedrock)
+- `AI_PROVIDER` - AI provider to use (openai, gemini, groq, aws-bedrock)
 - `OPENAI_API_KEY` - OpenAI API key (if using OpenAI)
 - `OPENAI_MODEL` - OpenAI model (e.g., gpt-4o-mini)
 - `GEMINI_API_KEY` - Google Gemini API key (if using Gemini)
+- `GROQ_API_KEY` - Groq API key (if using Groq)
+- `IMAGE_PROVIDER` - Image provider (puter, aws-bedrock, placeholder)
 - `NODE_ENV` - Environment (development, production)
 
 Optional:
+- `TTS_PROVIDER` - Text-to-speech provider (sarvam, aws-polly, browser)
+- `STT_PROVIDER` - Speech-to-text provider (browser, aws-transcribe)
+- `SARVAM_API_KEY` - Sarvam API key (if using Sarvam TTS)
 - `AWS_REGION` - AWS region (if using AWS services)
 - `AWS_ACCESS_KEY_ID` - AWS access key
 - `AWS_SECRET_ACCESS_KEY` - AWS secret key
+- `UNSPLASH_ACCESS_KEY` - Unsplash API key (for image search)
+
+## 🎨 Image Generation with Puter.js
+
+The backend now supports **free, fast image generation** using Puter.js - no API keys required!
+
+### Quick Setup
+
+```env
+IMAGE_PROVIDER=puter
+```
+
+That's it! Puter.js provides:
+- ✅ Free image generation (no API keys)
+- ✅ Fast generation (2-5 seconds)
+- ✅ Multiple AI models (GPT Image, DALL-E, Gemini, Stable Diffusion, Flux)
+- ✅ Automatic fallback to placeholders on errors
+
+### How It Works
+
+When a user asks for visual content, the AI automatically triggers image generation through the `/api/images/generate` endpoint, which uses the Puter adapter to create images in real-time.
+
+See `src/providers/puter/README.md` for more details.
 
 ## 🌐 API Endpoints
 

@@ -15,18 +15,23 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 export class AIService {
   /**
    * Send user query to AI and get a structured teaching response
+   * Images are generated in parallel on the backend
    */
   public async query(userInput: string): Promise<AIResponse> {
     try {
       const conversationHistory = sessionManager.getConversationHistory();
 
+      // Get AI response with parallel image generation on backend
       const response = await axios.post(`${API_BASE_URL}/chat`, {
         message: userInput,
         context: conversationHistory,
         systemPrompt: HARU_SYSTEM_PROMPT,
       });
 
+      console.log('🔍 Raw backend response:', response.data);
+
       const aiText: string = response.data.response || '';
+      console.log(`📝 AI text length: ${aiText.length}`);
 
       // Add to session history
       sessionManager.addExchange(userInput, aiText);
@@ -34,7 +39,12 @@ export class AIService {
       // Parse into teaching segments with gesture cues
       const segments = GestureRouter.parseTeachingContent(aiText);
       const optimizedSegments = GestureRouter.optimizeSegments(segments);
+
+      // Extract images from backend response
       const images = this.extractImageUrls(response.data.images || []);
+
+      console.log(`📦 Received response: ${images.length} images generated`);
+      console.log('🖼️ Image URLs:', images);
 
       return {
         text: aiText,

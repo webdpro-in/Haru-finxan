@@ -1,0 +1,100 @@
+﻿export function calculateRiskScore(
+  student: StudentProfile,
+  recentSessions: LearningSession[],
+  classroomAverage: number
+): RiskPrediction {
+  const riskFactors: RiskFactor[] = [];
+  let totalRisk = 0;
+
+  const masteryTrend = calculateMasteryTrend(recentSessions);
+  if (masteryTrend < 0) {
+    const factor: RiskFactor = {
+      factor: 'Declining mastery trend',
+      weight: 0.25,
+      description: `Mastery declining at ${Math.abs(masteryTrend).toFixed(1)}% per session`
+    };
+    riskFactors.push(factor);
+    totalRisk += 0.25 * Math.min(100, Math.abs(masteryTrend) * 10);
+  }
+
+  if (recentSessions.length > 0) {
+    const confusionRate = recentSessions.filter(s => s.confusionDetected).length / recentSessions.length;
+    if (confusionRate > 0.5) {
+      const factor: RiskFactor = {
+        factor: 'High confusion frequency',
+        weight: 0.20,
+        description: `Confused in ${(confusionRate * 100).toFixed(0)}% of recent sessions`
+      };
+      riskFactors.push(factor);
+      totalRisk += 0.20 * (confusionRate * 100);
+    }
+  }
+
+  const avgSessionGap = calculateAverageSessionGap(recentSessions);
+  const expectedGap = 2;
+  if (avgSessionGap > expectedGap * 2) {
+    const factor: RiskFactor = {
+      factor: 'Reduced engagement',
+      weight: 0.15,
+      description: `Average ${avgSessionGap.toFixed(1)} days between sessions`
+    };
+    riskFactors.push(factor);
+    totalRisk += 0.15 * Math.min(100, (avgSessionGap / expectedGap) * 50);
+  }
+
+  const studentAverage = calculateAverageMastery(student.conceptMasteries);
+  if (studentAverage < classroomAverage - 10) {
+    const factor: RiskFactor = {
+      factor: 'Below classroom average',
+      weight: 0.15,
+      description: `${studentAverage.toFixed(0)}% vs class average ${classroomAverage.toFixed(0)}%`
+    };
+    riskFactors.push(factor);
+    totalRisk += 0.15 * Math.min(100, classroomAverage - studentAverage);
+  }
+
+  const repeatedFailures = findRepeatedFailures(student.conceptMasteries);
+  if (repeatedFailures.length > 0) {
+    const factor: RiskFactor = {
+      factor: 'Repeated failures on same concepts',
+      weight: 0.15,
+      description: `Struggling with: ${repeatedFailures.slice(0, 3).join(', ')}`
+    };
+    riskFactors.push(factor);
+    totalRisk += 0.15 * Math.min(100, repeatedFailures.length * 20);
+  }
+
+  const negativeMoodRate = calculateNegativeMoodRate(student.moodHistory);
+  if (negativeMoodRate > 0.4) {
+    const factor: RiskFactor = {
+      factor: 'Negative mood patterns',
+      weight: 0.10,
+      description: `${(negativeMoodRate * 100).toFixed(0)}% of check-ins show anxiety/frustration`
+    };
+    riskFactors.push(factor);
+    totalRisk += 0.10 * (negativeMoodRate * 100);
+  }
+
+  const recommendedInterventions = generateInterventions(riskFactors);
+  const dataQuality = Math.min(1, recentSessions.length / 10);
+  const confidence = dataQuality * 0.8 + 0.2;
+
+  let predictedOutcome: 'at_risk' | 'needs_attention' | 'on_track';
+  if (totalRisk > 60) {
+    predictedOutcome = 'at_risk';
+  } else if (totalRisk > 30) {
+    predictedOutcome = 'needs_attention';
+  } else {
+    predictedOutcome = 'on_track';
+  }
+
+  return {
+    studentId: student.studentId,
+    studentName: student.name,
+    riskScore: Math.min(100, totalRisk),
+    riskFactors,
+    recommendedInterventions,
+    predictedOutcome,
+    confidence
+  };
+}

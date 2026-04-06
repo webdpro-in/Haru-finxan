@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo 3: Knowledge Graph Visual</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #080c10;
+      color: #fff;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .controls {
+      margin-bottom: 40px;
+    }
+
+    .scan-btn {
+      padding: 15px 40px;
+      background: #00e5ff;
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .scan-btn:hover {
+      background: #00bcd4;
+      transform: scale(1.05);
+    }
+
+    .scan-btn:disabled {
+      background: #333;
+      color: #666;
+      cursor: not-allowed;
+      transform: scale(1);
+    }
+
+    .graph-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 40px;
+      padding: 40px;
+      background: #0d1117;
+      border-radius: 12px;
+      border: 2px solid #1e2a38;
+      min-width: 900px;
+    }
+
+    .node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .node-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #161b22;
+      border: 4px solid #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      padding: 10px;
+      transition: all 0.5s ease;
+      position: relative;
+    }
+
+    .node-circle.scanning {
+      border-color: #ffd600;
+      background: #2a2410;
+      box-shadow: 0 0 30px rgba(255, 214, 0, 0.5);
+    }
+
+    .node-circle.gap {
+      border-color: #ff3d5a;
+      background: #2a1014;
+      box-shadow: 0 0 30px rgba(255, 61, 90, 0.8);
+      animation: pulse-red 1s infinite;
+    }
+
+    .node-circle.shaky {
+      border-color: #ffd600;
+      background: #2a2410;
+    }
+
+    .node-circle.solid {
+      border-color: #00ff88;
+      background: #102a1a;
+    }
+
+    .node-mastery {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    .arrow {
+      width: 60px;
+      height: 4px;
+      background: #444;
+      position: relative;
+      transition: all 0.5s ease;
+    }
+
+    .arrow::after {
+      content: '';
+      position: absolute;
+      right: -10px;
+      top: -6px;
+      width: 0;
+      height: 0;
+      border-left: 10px solid #444;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      transition: all 0.5s ease;
+    }
+
+    .arrow.active {
+      background: #ffd600;
+      animation: pulse-arrow 0.8s ease-in-out;
+    }
+
+    .arrow.active::after {
+      border-left-color: #ffd600;
+    }
+
+    .log-panel {
+      width: 900px;
+      background: #000;
+      border: 2px solid #00ff88;
+      border-radius: 8px;
+      padding: 20px;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      height: 200px;
+      overflow-y: auto;
+      margin-bottom: 30px;
+    }
+
+    .log-entry {
+      margin-bottom: 8px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .log-timestamp {
+      color: #00e5ff;
+    }
+
+    .log-critical {
+      color: #ff3d5a;
+      font-weight: bold;
+    }
+
+    .stats-panel {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .stat-item {
+      background: #161b22;
+      padding: 15px 30px;
+      border-radius: 8px;
+      border: 2px solid #1e2a38;
+      text-align: center;
+    }
+
+    .stat-item-label {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 5px;
+    }
+
+    .stat-item-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #00e5ff;
+    }
+
+    .banner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: #ff3d5a;
+      color: #fff;
+      padding: 30px 50px;
+      border-radius: 12px;
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      z-index: 1000;
+      box-shadow: 0 10px 50px rgba(255, 61, 90, 0.5);
+      transition: transform 0.3s ease;
+    }
+
+    .banner.show {
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes pulse-red {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes pulse-arrow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Prerequisite Detective — Knowledge Graph Scan</h1>
+
+  <div class="controls">
+    <button class="scan-btn" id="scanBtn" onclick="startScan()">🔍 Find Root Gap</button>
+  </div>
+
+  <div class="graph-container">
+    <div class="node">
+      <div class="node-circle" id="node0">
+        <div>Numbers</div>
+      </div>
+      <div class="node-mastery" id="mastery0">95%</div>
+    </div>
+
+    <div class="arrow" id="arrow0"></div>
+
+    <div class="node">
+      <div class="node-circle" id="node1">
+        <div>Fractions</div>
+      </div>
+      <div class="node-mastery" id="mastery1">18%</div>
+    </div>
+
+    <div class="arrow" id="arrow1"></div>
+
+    <div class="node">
+      <div class="node-circle" id="node2">
+        <div>Basic Algebra</div>
+      </div>
+      <div class="node-mastery" id="mastery2">35%</div>
+    </div>
+
+    <div class="arrow" id="arrow2"></div>
+
+    <div class="node">
+      <div class="node-circle" id="node3">
+        <div>Quadratic Equations</div>
+      </div>
+      <div class="node-mastery" id="mastery3">22%</div>
+    </div>
+
+    <div class="arrow" id="arrow3"></div>
+
+    <div class="node">
+      <div class="node-circle" id="node4">
+        <div>Calculus</div>
+      </div>
+      <div class="node-mastery" id="mastery4">-</div>
+    </div>
+  </div>
+
+  <div class="log-panel" id="logPanel"></div>
+
+  <div class="stats-panel">
+    <div class="stat-item">
+      <div class="stat-item-label">Traversal Depth</div>
+      <div class="stat-item-value" id="depthValue">-</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-item-label">Time to Detect</div>
+      <div class="stat-item-value" id="timeValue">-</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-item-label">Gap Severity</div>
+      <div class="stat-item-value" id="severityValue">-</div>
+    </div>
+  </div>
+
+  <div class="banner" id="banner">
+    🔴 ROOT GAP FOUND: Fractions (18% mastery)<br>
+    <div style="font-size: 16px; margin-top: 10px;">Session rerouted. Haru will now teach Fractions first.</div>
+  </div>
+
+  <script>
+    let scanning = false;
+    let startTime = 0;
+
+    function log(message, isCritical = false) {
+      const logPanel = document.getElementById('logPanel');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      
+      const elapsed = Date.now() - startTime;
+      const timestamp = document.createElement('span');
+      timestamp.className = 'log-timestamp';
+      timestamp.textContent = `[T+${elapsed}ms] `;
+      
+      const text = document.createElement('span');
+      if (isCritical) {
+        text.className = 'log-critical';
+      }
+      text.textContent = message;
+      
+      entry.appendChild(timestamp);
+      entry.appendChild(text);
+      logPanel.appendChild(entry);
+      logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    async function startScan() {
+      if (scanning) return;
+      
+      scanning = true;
+      startTime = Date.now();
+      document.getElementById('scanBtn').disabled = true;
+      document.getElementById('logPanel').innerHTML = '';
+      
+      // Reset all nodes
+      for (let i = 0; i < 5; i++) {
+        document.getElementById(`node${i}`).className = 'node-circle';
+        document.getElementById(`arrow${i}`)?.classList.remove('active');
+      }
+
+      // Step 1: Scan Quadratic Equations (0ms)
+      log('Scanning: Quadratic Equations… mastery 22%');
+      document.getElementById('node3').classList.add('scanning');
+      await sleep(800);
+
+      // Step 2: Trace to Basic Algebra (800ms)
+      document.getElementById('arrow2').classList.add('active');
+      await sleep(200);
+      log('Tracing prerequisite: Basic Algebra… mastery 35%');
+      document.getElementById('node3').classList.remove('scanning');
+      document.getElementById('node2').classList.add('scanning');
+      await sleep(600);
+
+      // Step 3: Trace to Fractions (1600ms)
+      document.getElementById('arrow2').classList.remove('active');
+      document.getElementById('arrow1').classList.add('active');
+      await sleep(200);
+      log('Tracing prerequisite: Fractions… mastery 18% ← CRITICAL', true);
+      document.getElementById('node2').classList.remove('scanning');
+      document.getElementById('node1').classList.add('scanning');
+      await sleep(600);
+
+      // Step 4: Mark gap (2400ms)
+      document.getElementById('arrow1').classList.remove('active');
+      document.getElementById('node1').classList.remove('scanning');
+      document.getElementById('node1').classList.add('gap');
+      document.getElementById('node2').classList.add('shaky');
+      document.getElementById('node0').classList.add('solid');
+      log('🔴 ROOT GAP FOUND: Fractions (18% mastery)', true);
+      
+      // Update stats
+      document.getElementById('depthValue').textContent = '3 levels';
+      document.getElementById('timeValue').textContent = '120ms';
+      document.getElementById('severityValue').textContent = 'Critical (18%)';
+      
+      await sleep(600);
+
+      // Step 5: Show banner (3000ms)
+      const banner = document.getElementById('banner');
+      banner.classList.add('show');
+      log('Session rerouted. Haru will now teach Fractions first before returning to Quadratic Equations.');
+      
+      await sleep(3000);
+      banner.classList.remove('show');
+      
+      scanning = false;
+      document.getElementById('scanBtn').disabled = false;
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  </script>
+</body>
+</html>

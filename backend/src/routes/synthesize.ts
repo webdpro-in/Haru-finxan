@@ -12,16 +12,13 @@
 
 import express from 'express';
 import { ProviderRegistry } from '../providers/registry.js';
+import { ValidationMiddleware } from '../middleware/inputValidation.js';
 
 export const synthesizeRouter = express.Router();
 
-synthesizeRouter.post('/', async (req, res) => {
+synthesizeRouter.post('/', ValidationMiddleware.synthesize, async (req, res) => {
   try {
     const { text, voiceId = 'Joanna', languageCode = 'en-US' } = req.body;
-
-    if (!text) {
-      return res.status(400).json({ error: 'Text is required' });
-    }
 
     // Get TTS provider from registry (uses TTSProvider contract interface)
     const ttsProvider = await ProviderRegistry.getTTSProvider();

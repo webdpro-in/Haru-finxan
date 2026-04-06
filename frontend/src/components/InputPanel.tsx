@@ -31,6 +31,8 @@ export const InputPanel: React.FC = () => {
     setIsTeaching,
     addChatMessage,
     setSpeaking,
+    clearGeneratedImages,
+    setIsGeneratingImages,
   } = useAppStore();
 
   // Setup real-time speech recognition callbacks
@@ -148,11 +150,50 @@ export const InputPanel: React.FC = () => {
 
     // For non-greetings, call AI backend
     try {
+      // Clear previous images and show loading state
+      console.log('🧹 Clearing previous images...');
+      clearGeneratedImages();
+      setIsGeneratingImages(true);
+
+      console.log('📡 Calling AI service...');
+      // Get AI response with images generated in parallel
+      // Images are generated FIRST before this returns
       const response = await aiService.query(text);
+      
+      console.log('📦 Received response:', {
+        textLength: response.text.length,
+        segmentsCount: response.segments.length,
+        imagesCount: response.images?.length || 0,
+        images: response.images,
+      });
+
+      // Store images in app state so they display immediately
+      if (response.images && response.images.length > 0) {
+        console.log(`🖼️ Storing ${response.images.length} images in app state`);
+        console.log('🖼️ Image URLs:', response.images);
+        response.images.forEach((img, index) => {
+          console.log(`   Adding image ${index + 1}: ${img.substring(0, 80)}...`);
+          useAppStore.getState().addGeneratedImage(img);
+        });
+        
+        // Verify images were stored
+        const storedImages = useAppStore.getState().generatedImages;
+        console.log(`✅ Verified: ${storedImages.length} images now in store`);
+      } else {
+        console.log('⚠️ No images in response!');
+      }
+
+      // Images are now ready and visible!
+      setIsGeneratingImages(false);
+      
+      // Add assistant message
       addChatMessage('assistant', response.text);
       setTeachingSegments(response.segments);
       setIsTeaching(true);
 
+      console.log('🎨 Images ready! Starting explanation with visuals visible...');
+
+      // Execute teaching sequence - images are already displayed
       await synchronizationCoordinator.executeTeachingSequence(
         response.segments,
         response.text,
@@ -164,6 +205,7 @@ export const InputPanel: React.FC = () => {
       const errorMsg = error instanceof Error ? error.message : 'Sorry, I encountered an error. Please try again.';
       setLeftPanelContent(errorMsg);
       addChatMessage('assistant', errorMsg);
+      setIsGeneratingImages(false);
     } finally {
       setIsProcessing(false);
     }

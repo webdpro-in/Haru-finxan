@@ -66,10 +66,12 @@ export class ProviderRegistry {
    * Get Image provider instance (singleton)
    * @returns ImageProvider implementation based on IMAGE_PROVIDER environment variable
    * @throws Error if provider name is unknown
+   * 
+   * Recommended: 'openrouter' for professional image generation with fallback
    */
   static async getImageProvider(): Promise<ImageProvider> {
     if (!this.imageProvider) {
-      const providerName = process.env.IMAGE_PROVIDER || 'aws-bedrock';
+      const providerName = process.env.IMAGE_PROVIDER || 'openrouter';
       this.imageProvider = await this.createImageProvider(providerName);
     }
     return this.imageProvider;
@@ -140,6 +142,15 @@ export class ProviderRegistry {
    */
   private static async createImageProvider(providerName: string): Promise<ImageProvider> {
     switch (providerName) {
+      case 'freepik':
+        const { FreepikImageAdapter } = await import('./freepik/FreepikImageAdapter.js');
+        return new FreepikImageAdapter();
+      case 'openrouter':
+        const { OpenRouterImageAdapter } = await import('./openrouter/OpenRouterImageAdapter.js');
+        return new OpenRouterImageAdapter();
+      case 'pollinations':
+        const { PollinationsImageAdapter } = await import('./pollinations/PollinationsImageAdapter.js');
+        return new PollinationsImageAdapter();
       case 'placeholder':
         const { PlaceholderImageAdapter } = await import('./browser/PlaceholderImageAdapter.js');
         return new PlaceholderImageAdapter();
@@ -147,7 +158,7 @@ export class ProviderRegistry {
         const { AWSImageAdapter } = await import('./aws/AWSImageAdapter.js');
         return new AWSImageAdapter();
       default:
-        throw new Error(`Unknown Image provider: ${providerName}. Available: placeholder, aws-bedrock`);
+        throw new Error(`Unknown Image provider: ${providerName}. Available: freepik, openrouter, pollinations, placeholder, aws-bedrock`);
     }
   }
 

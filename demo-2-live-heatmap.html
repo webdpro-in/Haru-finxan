@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo 2: Live Heatmap Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #080c10;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 20px;
+    }
+
+    .stat-card {
+      background: #161b22;
+      padding: 20px 40px;
+      border-radius: 12px;
+      border: 2px solid #1e2a38;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: 'Space Mono', monospace;
+      font-size: 28px;
+      font-weight: bold;
+      color: #00e5ff;
+    }
+
+    .heatmap-container {
+      background: #0d1117;
+      border-radius: 12px;
+      padding: 30px;
+      border: 2px solid #1e2a38;
+      margin-bottom: 30px;
+    }
+
+    .heatmap-title {
+      font-size: 20px;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: 150px repeat(5, 1fr);
+      gap: 2px;
+      background: #1e2a38;
+      border: 2px solid #1e2a38;
+    }
+
+    .cell {
+      background: #161b22;
+      padding: 15px;
+      text-align: center;
+      font-family: 'Space Mono', monospace;
+      transition: all 0.5s ease;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .cell.header {
+      background: #0d1117;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .cell.student-name {
+      background: #0d1117;
+      font-weight: bold;
+      justify-content: flex-start;
+      padding-left: 20px;
+    }
+
+    .cell.score {
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .cell.critical {
+      background: #ff3d5a;
+      color: #fff;
+      animation: pulse-red 2s infinite;
+    }
+
+    .cell.shaky {
+      background: #ffd600;
+      color: #000;
+    }
+
+    .cell.progressing {
+      background: #00bcd4;
+      color: #000;
+    }
+
+    .cell.mastered {
+      background: #00ff88;
+      color: #000;
+    }
+
+    .score-label {
+      font-size: 10px;
+      margin-top: 4px;
+      opacity: 0.8;
+    }
+
+    .confusion-map {
+      background: #0d1117;
+      border-radius: 12px;
+      padding: 30px;
+      border: 2px solid #1e2a38;
+      margin-bottom: 30px;
+    }
+
+    .confusion-title {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    .confusion-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .confusion-bar {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .bar-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      width: 150px;
+    }
+
+    .bar-container {
+      flex: 1;
+      height: 30px;
+      background: #161b22;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: #ff3d5a;
+      transition: width 1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .ai-suggestion {
+      background: #1a1e24;
+      border: 2px solid #ffd600;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .suggestion-icon {
+      font-size: 32px;
+    }
+
+    .suggestion-text {
+      flex: 1;
+      font-size: 16px;
+    }
+
+    .suggestion-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .suggestion-buttons button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s ease;
+    }
+
+    .accept-btn {
+      background: #00ff88;
+      color: #000;
+    }
+
+    .accept-btn:hover {
+      background: #00dd77;
+    }
+
+    .dismiss-btn {
+      background: #ff3d5a;
+      color: #fff;
+    }
+
+    .dismiss-btn:hover {
+      background: #dd2a48;
+    }
+
+    @keyframes pulse-red {
+      0%, 100% { box-shadow: 0 0 0 rgba(255, 61, 90, 0); }
+      50% { box-shadow: 0 0 20px rgba(255, 61, 90, 0.8); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Finxan AI — Class Mastery Heatmap</h1>
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Active Students</div>
+        <div class="stat-value">8</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Critical</div>
+        <div class="stat-value" id="criticalCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Class Average</div>
+        <div class="stat-value" id="classAverage">72%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="heatmap-container">
+    <div class="heatmap-title">📊 Real-Time Mastery Grid</div>
+    <div class="heatmap-grid" id="heatmapGrid"></div>
+  </div>
+
+  <div class="confusion-map">
+    <div class="confusion-title">👁 Topics Students Asked Privately</div>
+    <div class="confusion-bars">
+      <div class="confusion-bar">
+        <div class="bar-label">Fractions</div>
+        <div class="bar-container">
+          <div class="bar-fill" style="width: 0%" data-target="75">75%</div>
+        </div>
+      </div>
+      <div class="confusion-bar">
+        <div class="bar-label">Basic Algebra</div>
+        <div class="bar-container">
+          <div class="bar-fill" style="width: 0%" data-target="50">50%</div>
+        </div>
+      </div>
+      <div class="confusion-bar">
+        <div class="bar-label">Newton Laws</div>
+        <div class="bar-container">
+          <div class="bar-fill" style="width: 0%" data-target="25">25%</div>
+        </div>
+      </div>
+    </div>
+    <p style="margin-top: 15px; font-size: 12px; color: #888;">These students asked anonymously — identities hidden</p>
+  </div>
+
+  <div class="ai-suggestion">
+    <div class="suggestion-icon">💡</div>
+    <div class="suggestion-text">
+      <strong>AI Suggestion:</strong> <span id="suggestionText">5 students are critical on Fractions. Consider 10 extra minutes tomorrow.</span>
+    </div>
+    <div class="suggestion-buttons">
+      <button class="accept-btn" onclick="acceptSuggestion()">Accept</button>
+      <button class="dismiss-btn" onclick="dismissSuggestion()">Dismiss</button>
+    </div>
+  </div>
+
+  <script>
+    const students = ['Aarav', 'Priya', 'Ravi', 'Sneha', 'Dev', 'Meera', 'Arjun', 'Kiran'];
+    const subjects = ['Photosynthesis', 'Fractions', 'Algebra', 'Newton Laws', 'Calculus'];
+    
+    // Initialize scores
+    const scores = {};
+    students.forEach(student => {
+      scores[student] = {};
+      subjects.forEach(subject => {
+        scores[student][subject] = Math.floor(Math.random() * 60) + 30; // 30-90
+      });
+    });
+
+    function getScoreClass(score) {
+      if (score < 40) return 'critical';
+      if (score < 65) return 'shaky';
+      if (score < 85) return 'progressing';
+      return 'mastered';
+    }
+
+    function getScoreLabel(score) {
+      if (score < 40) return 'Critical';
+      if (score < 65) return 'Shaky';
+      if (score < 85) return 'Progressing';
+      return 'Mastered';
+    }
+
+    function renderHeatmap() {
+      const grid = document.getElementById('heatmapGrid');
+      grid.innerHTML = '';
+
+      // Header row
+      const cornerCell = document.createElement('div');
+      cornerCell.className = 'cell header';
+      cornerCell.textContent = 'Student';
+      grid.appendChild(cornerCell);
+
+      subjects.forEach(subject => {
+        const cell = document.createElement('div');
+        cell.className = 'cell header';
+        cell.textContent = subject;
+        grid.appendChild(cell);
+      });
+
+      // Student rows
+      students.forEach(student => {
+        const nameCell = document.createElement('div');
+        nameCell.className = 'cell student-name';
+        nameCell.textContent = student;
+        grid.appendChild(nameCell);
+
+        subjects.forEach(subject => {
+          const score = scores[student][subject];
+          const cell = document.createElement('div');
+          cell.className = `cell score ${getScoreClass(score)}`;
+          cell.innerHTML = `
+            <div>${score}</div>
+            <div class="score-label">${getScoreLabel(score)}</div>
+          `;
+          cell.dataset.student = student;
+          cell.dataset.subject = subject;
+          grid.appendChild(cell);
+        });
+      });
+
+      updateStats();
+    }
+
+    function updateStats() {
+      let totalScore = 0;
+      let totalCells = 0;
+      let criticalCount = 0;
+
+      students.forEach(student => {
+        subjects.forEach(subject => {
+          const score = scores[student][subject];
+          totalScore += score;
+          totalCells++;
+          if (score < 40) criticalCount++;
+        });
+      });
+
+      const average = Math.round(totalScore / totalCells);
+      document.getElementById('classAverage').textContent = `${average}%`;
+      document.getElementById('criticalCount').textContent = criticalCount;
+
+      // Update suggestion
+      if (criticalCount > 0) {
+        const criticalSubjects = {};
+        students.forEach(student => {
+          subjects.forEach(subject => {
+            if (scores[student][subject] < 40) {
+              criticalSubjects[subject] = (criticalSubjects[subject] || 0) + 1;
+            }
+          });
+        });
+
+        const mostCritical = Object.entries(criticalSubjects).sort((a, b) => b[1] - a[1])[0];
+        if (mostCritical) {
+          document.getElementById('suggestionText').textContent = 
+            `${mostCritical[1]} students are critical on ${mostCritical[0]}. Consider 10 extra minutes tomorrow.`;
+        }
+      }
+    }
+
+    function updateRandomCell() {
+      const student = students[Math.floor(Math.random() * students.length)];
+      const subject = subjects[Math.floor(Math.random() * subjects.length)];
+      
+      const change = Math.floor(Math.random() * 17) - 7; // -7 to +12
+      const oldScore = scores[student][subject];
+      const newScore = Math.max(0, Math.min(100, oldScore + change));
+      
+      scores[student][subject] = newScore;
+      
+      // Find and update the cell
+      const cells = document.querySelectorAll('.cell.score');
+      cells.forEach(cell => {
+        if (cell.dataset.student === student && cell.dataset.subject === subject) {
+          const oldClass = getScoreClass(oldScore);
+          const newClass = getScoreClass(newScore);
+          
+          cell.className = `cell score ${newClass}`;
+          cell.innerHTML = `
+            <div>${newScore}</div>
+            <div class="score-label">${getScoreLabel(newScore)}</div>
+          `;
+          
+          console.log(`Updated ${student} - ${subject}: ${oldScore} → ${newScore} (${oldClass} → ${newClass})`);
+        }
+      });
+
+      updateStats();
+    }
+
+    function acceptSuggestion() {
+      alert('✅ Suggestion accepted! Extra session scheduled for tomorrow.');
+    }
+
+    function dismissSuggestion() {
+      alert('❌ Suggestion dismissed.');
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      renderHeatmap();
+      
+      // Animate confusion bars
+      setTimeout(() => {
+        document.querySelectorAll('.bar-fill').forEach(bar => {
+          const target = bar.dataset.target;
+          bar.style.width = `${target}%`;
+        });
+      }, 500);
+
+      // Update random cells every 3 seconds
+      setInterval(updateRandomCell, 3000);
+    });
+  </script>
+</body>
+</html>

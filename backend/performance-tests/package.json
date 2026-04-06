@@ -1,0 +1,20 @@
+{
+  "name": "finxanai-performance-tests",
+  "version": "1.0.0",
+  "description": "Performance testing suite for FinxanAI platform",
+  "scripts": {
+    "test:load": "k6 run load-test.k6.js",
+    "test:load:quick": "k6 run --vus 100 --duration 30s load-test.k6.js",
+    "test:load:stress": "k6 run --vus 15000 --duration 10m load-test.k6.js",
+    "test:load:report": "k6 run --out json=results.json load-test.k6.js && node generate-report.js",
+    "test:latency": "k6 run latency-test.k6.js",
+    "test:heatmap": "k6 run heatmap-performance.k6.js"
+  },
+  "keywords": [
+    "performance",
+    "load-testing",
+    "k6"
+  ],
+  "author": "FinxanAI Team",
+  "license": "MIT"
+}

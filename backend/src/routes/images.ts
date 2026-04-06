@@ -8,17 +8,14 @@
 
 import express from 'express';
 import { ProviderRegistry } from '../providers/registry.js';
+import { ValidationMiddleware } from '../middleware/inputValidation.js';
 
 export const imagesRouter = express.Router();
 
 // Search for images
-imagesRouter.post('/search', async (req, res) => {
+imagesRouter.post('/search', ValidationMiddleware.imageSearch, async (req, res) => {
   try {
     const { query, count = 3 } = req.body;
-
-    if (!query) {
-      return res.status(400).json({ error: 'Query is required' });
-    }
 
     // Get Image provider from registry (depends on contract, not implementation)
     const imageProvider = await ProviderRegistry.getImageProvider();
@@ -34,13 +31,11 @@ imagesRouter.post('/search', async (req, res) => {
 });
 
 // Generate image
-imagesRouter.post('/generate', async (req, res) => {
+imagesRouter.post('/generate', ValidationMiddleware.imageGenerate, async (req, res) => {
   try {
     const { prompt } = req.body;
 
-    if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is required' });
-    }
+    console.log(`🎨 Direct image generation request: "${prompt}"`);
 
     // Get Image provider from registry (depends on contract, not implementation)
     const imageProvider = await ProviderRegistry.getImageProvider();
@@ -48,9 +43,35 @@ imagesRouter.post('/generate', async (req, res) => {
     // Call provider through contract interface
     const imageUrl = await imageProvider.generate(prompt);
 
+    console.log(`✅ Generated image: ${imageUrl}`);
     res.json({ imageUrl });
   } catch (error) {
     console.error('Image generation error:', error);
     res.status(500).json({ error: 'Failed to generate image' });
+  }
+});
+
+// Test endpoint - generate multiple images
+imagesRouter.post('/test', async (req, res) => {
+  try {
+    console.log('🧪 Test endpoint called - generating 3 test images');
+    
+    const imageProvider = await ProviderRegistry.getImageProvider();
+    
+    const testPrompts = [
+      'A peaceful mountain landscape at sunset',
+      'Solar system with planets orbiting the sun',
+      'Water cycle diagram with labels'
+    ];
+    
+    const images = await Promise.all(
+      testPrompts.map(prompt => imageProvider.generate(prompt))
+    );
+    
+    console.log(`✅ Test generated ${images.length} images`);
+    res.json({ images, prompts: testPrompts });
+  } catch (error) {
+    console.error('Test generation error:', error);
+    res.status(500).json({ error: 'Test failed' });
   }
 });

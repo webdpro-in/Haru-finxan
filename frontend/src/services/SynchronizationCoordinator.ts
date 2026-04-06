@@ -39,12 +39,19 @@ export class SynchronizationCoordinator {
       console.log('[SyncCoordinator] 🎬 Starting teaching sequence');
       const syncStart = performance.now();
 
-      // 1. Update text content
+      // 1. Update text content immediately
       store.setLeftPanelContent(fullText);
 
-      // 2. Update images if present
+      // 2. Ensure images are displayed (they should already be in store from AIService)
+      // Only update if images were passed and not already in store
       if (images && images.length > 0) {
-        store.setRightPanelImages(images);
+        const currentImages = store.generatedImages;
+        if (currentImages.length === 0) {
+          console.log(`[SyncCoordinator] 🖼️ Storing ${images.length} generated images`);
+          images.forEach(img => store.addGeneratedImage(img));
+        } else {
+          console.log(`[SyncCoordinator] 🖼️ Images already in store (${currentImages.length} images)`);
+        }
       }
 
       // 3. Pre-fetch TTS audio for each segment to ensure perfect synchronization

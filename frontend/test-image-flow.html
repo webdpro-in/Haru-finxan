@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Image Flow</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+    button { padding: 10px 20px; margin: 10px; font-size: 16px; cursor: pointer; }
+    .images { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+    .images img { width: 300px; height: 200px; object-fit: cover; border: 2px solid #4facfe; }
+    .log { background: #000; padding: 10px; margin: 10px 0; border-left: 3px solid #4facfe; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Test Image Generation Flow</h1>
+  
+  <button onclick="testBackendDirect()">Test 1: Backend Direct (/api/images/test)</button>
+  <button onclick="testBackendGenerate()">Test 2: Backend Generate (/api/images/generate)</button>
+  <button onclick="testChatFlow()">Test 3: Chat Flow (/api/chat)</button>
+  <button onclick="clearImages()">Clear Images</button>
+  
+  <div id="log"></div>
+  <div id="images" class="images"></div>
+
+  <script>
+    const API_URL = 'http://localhost:3001/api';
+    
+    function log(msg) {
+      const logDiv = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = 'log';
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logDiv.appendChild(entry);
+      console.log(msg);
+    }
+    
+    function showImages(images) {
+      const imagesDiv = document.getElementById('images');
+      images.forEach((url, i) => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = `Image ${i + 1}`;
+        img.onerror = () => log(`❌ Failed to load image ${i + 1}: ${url}`);
+        img.onload = () => log(`✅ Loaded image ${i + 1}`);
+        imagesDiv.appendChild(img);
+      });
+    }
+    
+    function clearImages() {
+      document.getElementById('images').innerHTML = '';
+      document.getElementById('log').innerHTML = '';
+      log('🧹 Cleared');
+    }
+    
+    async function testBackendDirect() {
+      log('🧪 Test 1: Calling /api/images/test...');
+      try {
+        const response = await fetch(`${API_URL}/images/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        log(`✅ Received ${data.images.length} images`);
+        data.images.forEach((url, i) => log(`   ${i + 1}. ${url.substring(0, 80)}...`));
+        showImages(data.images);
+      } catch (error) {
+        log(`❌ Error: ${error.message}`);
+      }
+    }
+    
+    async function testBackendGenerate() {
+      log('🧪 Test 2: Calling /api/images/generate...');
+      try {
+        const response = await fetch(`${API_URL}/images/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: 'A beautiful sunset over mountains' })
+        });
+        const data = await response.json();
+        log(`✅ Generated: ${data.imageUrl.substring(0, 80)}...`);
+        showImages([data.imageUrl]);
+      } catch (error) {
+        log(`❌ Error: ${error.message}`);
+      }
+    }
+    
+    async function testChatFlow() {
+      log('🧪 Test 3: Calling /api/chat...');
+      try {
+        const response = await fetch(`${API_URL}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message: 'explain the water cycle',
+            context: ''
+          })
+        });
+        const data = await response.json();
+        log(`✅ Response received`);
+        log(`   Text length: ${data.response.length}`);
+        log(`   Images: ${data.images?.length || 0}`);
+        if (data.images && data.images.length > 0) {
+          data.images.forEach((url, i) => log(`   ${i + 1}. ${url.substring(0, 80)}...`));
+          showImages(data.images);
+        } else {
+          log('⚠️ No images in response!');
+        }
+      } catch (error) {
+        log(`❌ Error: ${error.message}`);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -18,6 +18,7 @@ interface AppState {
   rightPanelImages: string[];
   chatHistory: ChatMessage[];
   generatedImages: string[];
+  isGeneratingImages: boolean; // NEW: Track if images are being generated
   currentSegmentIndex: number;
   
   // Haru State
@@ -44,6 +45,7 @@ interface AppState {
   
   addGeneratedImage: (imageUrl: string) => void;
   clearGeneratedImages: () => void;
+  setIsGeneratingImages: (generating: boolean) => void; // NEW
   
   setHaruState: (state: HaruState) => void;
   setCurrentGesture: (gesture: GestureType) => void;
@@ -66,6 +68,7 @@ export const useAppStore = create<AppState>((set) => ({
   rightPanelImages: [],
   chatHistory: [],
   generatedImages: [],
+  isGeneratingImages: false, // NEW
   currentSegmentIndex: 0,
   
   haruState: 'idle',
@@ -111,6 +114,8 @@ export const useAppStore = create<AppState>((set) => ({
   
   clearGeneratedImages: () => set({ generatedImages: [] }),
   
+  setIsGeneratingImages: (isGeneratingImages) => set({ isGeneratingImages }), // NEW
+  
   setHaruState: (haruState) => set({ haruState }),
   
   setCurrentGesture: (currentGesture) => set({ currentGesture }),
@@ -142,6 +147,7 @@ export const useAppStore = create<AppState>((set) => ({
     rightPanelImages: [],
     chatHistory: [],
     generatedImages: [],
+    isGeneratingImages: false, // NEW
     currentSegmentIndex: 0,
     haruState: 'idle',
     currentGesture: 'idle',
@@ -152,3 +158,10 @@ export const useAppStore = create<AppState>((set) => ({
     isTeaching: false,
   }),
 }));
+
+// Expose store for debugging in development
+if (typeof window !== 'undefined' && import.meta.env?.DEV) {
+  // @ts-ignore
+  window.__ZUSTAND_STORE__ = useAppStore;
+  console.log('🔧 Store exposed as window.__ZUSTAND_STORE__ for debugging');
+}
