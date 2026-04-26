@@ -41,19 +41,14 @@ export class OpenAIAdapter implements AIProvider {
   private model: string;
   private apiEndpoint: string;
 
-  constructor() {
-    this.apiKey = process.env.OPENAI_API_KEY || '';
-    this.model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  constructor(apiKey?: string, model?: string) {
+    this.apiKey = apiKey || process.env.OPENAI_API_KEY || '';
+    this.model = model || process.env.OPENAI_MODEL || 'gpt-4o-mini';
     this.apiEndpoint = 'https://api.openai.com/v1';
 
     if (!this.apiKey) {
       console.warn('⚠️  OPENAI_API_KEY not set. OpenAI adapter will fail at runtime.');
     }
-    
-    console.log('🤖 OpenAI Adapter initialized');
-    console.log('   Model:', this.model);
-    console.log('   Endpoint:', this.apiEndpoint);
-    console.log('   API Key:', this.apiKey ? '✓ Set' : '✗ Not set');
   }
 
   async chat(

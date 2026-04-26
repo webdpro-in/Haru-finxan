@@ -1,0 +1,39 @@
+.credit-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #4338ca;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+.credit-pill:hover { background: rgba(99, 102, 241, 0.2); }
+.credit-pill:active { transform: scale(0.97); }
+
+.credit-icon { font-size: 14px; }
+.credit-count { font-variant-numeric: tabular-nums; }
+.credit-label { font-weight: 500; opacity: 0.85; }
+
+.credit-pill-low {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.credit-pill-low:hover { background: rgba(239, 68, 68, 0.2); }
+
+.credit-pill-byok {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.credit-pill-byok:hover { background: rgba(16, 185, 129, 0.18); }
+.credit-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}

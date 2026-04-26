@@ -1,7 +1,7 @@
 {
-  "name": "finxan-ai-platform",
+  "name": "haru-ai-teacher",
   "version": "1.0.0",
-  "description": "FinxanAI - AI-powered educational platform with Haru character",
+  "description": "Haru AI Teacher - anime-style 3D AI tutor for the AMD Slingshot AI in Education hackathon",
   "private": true,
   "workspaces": [
     "frontend",
@@ -9,25 +9,22 @@
   ],
   "scripts": {
     "install:all": "npm install --prefix frontend && npm install --prefix backend",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && npm run dev",
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
-    "build:frontend": "cd frontend && npm install && npm run build",
-    "build:backend": "cd backend && npm install && npm run build",
-    "build": "npm run build:frontend && npm run build:backend",
-    "test:frontend": "cd frontend && npm test",
-    "test:backend": "cd backend && npm test",
-    "test": "npm run test:frontend && npm run test:backend",
-    "vercel-build": "npm run build:frontend"
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "npm run build --prefix frontend",
+    "build:backend": "npm run build --prefix backend",
+    "build": "npm run build:backend && npm run build:frontend",
+    "test:frontend": "npm test --prefix frontend",
+    "test:backend": "npm test --prefix backend"
   },
   "keywords": [
     "education",
     "ai",
-    "learning",
-    "fintech",
-    "haru"
+    "live2d",
+    "haru",
+    "tutor"
   ],
-  "author": "FinxanAI Team",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0",

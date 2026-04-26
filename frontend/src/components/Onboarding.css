@@ -1,0 +1,113 @@
+.onb-overlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.55), rgba(139, 92, 246, 0.55));
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 24px;
+}
+
+.onb-modal {
+  width: 100%;
+  max-width: 480px;
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35);
+}
+
+.onb-progress {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+.onb-dot {
+  width: 24px; height: 4px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+.onb-dot.active { background: #6366f1; }
+
+.onb-step { text-align: center; }
+.onb-emoji { font-size: 44px; margin-bottom: 8px; }
+.onb-step h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+.onb-step p {
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+
+.onb-subjects {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 16px 0 24px;
+}
+@media (max-width: 480px) {
+  .onb-subjects { grid-template-columns: 1fr 1fr; }
+}
+
+.onb-subject {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  color: #475569;
+  transition: all 0.15s ease;
+}
+.onb-subject:hover { border-color: #c7d2fe; color: #0f172a; }
+.onb-subject.selected {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  color: #4338ca;
+}
+.onb-subject-emoji { font-size: 22px; }
+
+.onb-primary {
+  width: 100%;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.onb-primary:hover { opacity: 0.93; }
+
+.onb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.onb-link {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 12px;
+}
+.onb-link:hover { color: #0f172a; }

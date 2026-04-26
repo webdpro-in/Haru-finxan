@@ -12,6 +12,8 @@ export class EyeController {
   private model: Live2DModel | null = null;
   private currentDirection: 'left' | 'right' | 'center' = 'center';
   private returnToCenterTimeout: NodeJS.Timeout | null = null;
+  private blinkTimeout: NodeJS.Timeout | null = null;
+  private blinkActive = false;
 
   /**
    * Initialize with Live2D model
@@ -19,6 +21,50 @@ export class EyeController {
   public setModel(model: Live2DModel): void {
     this.model = model;
     console.log('👀 EyeController initialized');
+    this.startAutoBlink();
+  }
+
+  /**
+   * Subtle automatic blink — triggers every 3–6 s and keeps the
+   * character feeling alive when idle.
+   */
+  public startAutoBlink(): void {
+    if (this.blinkActive) return;
+    this.blinkActive = true;
+    const schedule = () => {
+      const delay = 3000 + Math.random() * 3000;
+      this.blinkTimeout = setTimeout(() => {
+        this.blinkOnce();
+        if (this.blinkActive) schedule();
+      }, delay);
+    };
+    schedule();
+  }
+
+  public stopAutoBlink(): void {
+    this.blinkActive = false;
+    if (this.blinkTimeout) {
+      clearTimeout(this.blinkTimeout);
+      this.blinkTimeout = null;
+    }
+  }
+
+  private blinkOnce(): void {
+    if (!this.model) return;
+    try {
+      const coreModel = (this.model.internalModel as any).coreModel;
+      if (!coreModel?.setParameterValueById) return;
+      coreModel.setParameterValueById('ParamEyeLOpen', 0);
+      coreModel.setParameterValueById('ParamEyeROpen', 0);
+      setTimeout(() => {
+        try {
+          coreModel.setParameterValueById('ParamEyeLOpen', 1);
+          coreModel.setParameterValueById('ParamEyeROpen', 1);
+        } catch { /* model may have been destroyed */ }
+      }, 110);
+    } catch (err) {
+      console.warn('blink failed', err);
+    }
   }
 
   /**
@@ -126,6 +172,7 @@ export class EyeController {
       clearTimeout(this.returnToCenterTimeout);
       this.returnToCenterTimeout = null;
     }
+    this.stopAutoBlink();
     this.model = null;
   }
 }

@@ -20,6 +20,7 @@ export const Live2DCanvas: React.FC<Live2DCanvasProps> = ({ modelPath }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const appRef = useRef<PIXI.Application | null>(null);
   const modelRef = useRef<Live2DModel | null>(null);
+  const [loadFailed, setLoadFailed] = React.useState(false);
 
   const { setHaruState } = useAppStore();
 
@@ -162,26 +163,35 @@ export const Live2DCanvas: React.FC<Live2DCanvasProps> = ({ modelPath }) => {
 
     } catch (error) {
       console.error('❌ Failed to load Live2D model:', error);
-      console.error('📋 Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        path,
-        fullURL: window.location.origin + path,
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      
-      // Display error message on canvas
-      const errorText = new PIXI.Text('Failed to load character\nCheck console for details', {
-        fontFamily: 'Arial',
-        fontSize: 24,
-        fill: 0xff0000,
-        align: 'center',
-      });
-      errorText.anchor.set(0.5);
-      errorText.x = app.screen.width / 2;
-      errorText.y = app.screen.height / 2;
-      app.stage.addChild(errorText);
+      setLoadFailed(true);
+      setHaruState('idle');
     }
   };
+
+  if (loadFailed) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 12,
+          color: '#475569',
+          textAlign: 'center',
+          padding: 24,
+        }}
+      >
+        <div style={{ fontSize: 64 }}>🌸</div>
+        <div style={{ fontWeight: 700, fontSize: 18, color: '#0f172a' }}>Haru is here in spirit</div>
+        <div style={{ fontSize: 13, maxWidth: 280 }}>
+          The 3D character couldn&apos;t load, but the chat below still works.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <canvas

@@ -26,6 +26,7 @@ export const InputPanel: React.FC = () => {
 
   const {
     isSpeaking,
+    language,
     setLeftPanelContent,
     setTeachingSegments,
     setIsTeaching,
@@ -34,6 +35,12 @@ export const InputPanel: React.FC = () => {
     clearGeneratedImages,
     setIsGeneratingImages,
   } = useAppStore();
+
+  // Sync recognition language with store (en-US / hi-IN)
+  useEffect(() => {
+    if (!RealtimeSpeechService.isSupported()) return;
+    realtimeSpeechService.setLanguage(language === 'hi' ? 'hi-IN' : 'en-US');
+  }, [language]);
 
   // Setup real-time speech recognition callbacks
   useEffect(() => {
@@ -113,11 +120,15 @@ export const InputPanel: React.FC = () => {
         eyeController.lookRight(3000);
         
         const utterance = new SpeechSynthesisUtterance(greetingResponse);
+        const langPrefix = language === 'hi' ? 'hi' : 'en';
+        utterance.lang = language === 'hi' ? 'hi-IN' : 'en-US';
         utterance.rate = 0.9;
         utterance.pitch = 1.1;
-        
+
         const voices = window.speechSynthesis.getVoices();
-        const femaleVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Victoria'));
+        const inLang = voices.filter((v) => v.lang.toLowerCase().startsWith(langPrefix));
+        const femaleVoice =
+          inLang.find((v) => /female|samantha|victoria|kalpana|swara/i.test(v.name)) || inLang[0];
         if (femaleVoice) {
           utterance.voice = femaleVoice;
         }

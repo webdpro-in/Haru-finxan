@@ -1,0 +1,52 @@
+.subject-select {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  padding: 6px 28px 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 20 20' fill='%2364748b'><path fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z' clip-rule='evenodd'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  transition: background-color 0.15s ease;
+}
+.subject-select:hover { background-color: white; }
+
+.mode-toggle {
+  display: inline-flex;
+  background: rgba(15, 23, 42, 0.06);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+.mode-toggle button {
+  border: none;
+  background: transparent;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.mode-toggle button.active {
+  background: white;
+  color: #4338ca;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+}
+
+.language-toggle {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+}
+.language-toggle:hover { background: white; }

@@ -36,19 +36,14 @@ export class GeminiAdapter implements AIProvider {
   private model: string;
   private apiEndpoint: string;
 
-  constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY || '';
-    this.model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  constructor(apiKey?: string, model?: string) {
+    this.apiKey = apiKey || process.env.GEMINI_API_KEY || '';
+    this.model = model || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
     this.apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta';
 
     if (!this.apiKey) {
       console.warn('⚠️  GEMINI_API_KEY not set. Gemini adapter will fail at runtime.');
     }
-    
-    console.log('🤖 Gemini Adapter initialized');
-    console.log('   Model:', this.model);
-    console.log('   Endpoint:', this.apiEndpoint);
-    console.log('   API Key:', this.apiKey ? '✓ Set' : '✗ Not set');
   }
 
   async chat(

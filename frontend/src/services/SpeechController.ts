@@ -69,21 +69,32 @@ export class SpeechController {
   }
 
   /**
-   * Convert text to speech via backend TTS provider.
-   * Returns either a browser-tts:// URL (browser-native) or an HTTP audio URL.
+   * Convert text to speech.
+   * Tries backend TTS first; on any failure, falls back to in-browser
+   * Web Speech API by encoding a browser-tts:// URL inline.
+   * The caller's language is read from the store at request time.
    */
   public async textToSpeech(text: string): Promise<string> {
+    // Lazy import to avoid circular issues at module init
+    const { useAppStore } = await import('../store/useAppStore');
+    const language = useAppStore.getState().language;
+    const languageCode = language === 'hi' ? 'hi-IN' : 'en-US';
+    const voiceId = language === 'hi' ? 'Aditi' : 'Joanna';
+
     try {
       const response = await axios.post(`${API_BASE_URL}/synthesize`, {
         text,
-        voiceId: 'Joanna',
-        languageCode: 'en-US',
+        voiceId,
+        languageCode,
       });
-      return response.data.audioUrl;
+      if (response.data?.audioUrl) return response.data.audioUrl;
     } catch (error) {
-      console.error('TTS error:', error);
-      throw new Error('Failed to synthesize speech');
+      // backend TTS not configured — fall through to browser TTS
+      console.info('Backend TTS unavailable, using browser speech.');
     }
+
+    const payload = JSON.stringify({ text, voiceId, languageCode });
+    return `browser-tts://${btoa(unescape(encodeURIComponent(payload)))}`;
   }
 
   /**
@@ -112,23 +123,23 @@ export class SpeechController {
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(payload.text);
+        const langCode = payload.languageCode || 'en-US';
+        const langPrefix = langCode.split('-')[0];
+        utterance.lang = langCode;
         utterance.rate = 0.92;
         utterance.pitch = 1.05;
         utterance.volume = 1.0;
 
         const pickVoice = () => {
           const voices = window.speechSynthesis.getVoices();
-          const female = voices.find(v =>
-            v.lang.startsWith('en') &&
-            (v.name.includes('Female') || v.name.includes('Samantha') ||
-             v.name.includes('Victoria') || v.name.includes('Karen') ||
-             v.name.includes('Aria') || v.name.includes('Ava') ||
-             v.name.includes('Jenny') || v.name.includes('Zira'))
+          const inLang = voices.filter((v) => v.lang.toLowerCase().startsWith(langPrefix));
+          const female = inLang.find((v) =>
+            /female|samantha|victoria|karen|aria|ava|jenny|zira|kalpana|swara|google.*hindi.*female/i.test(v.name)
           );
-          if (female) { utterance.voice = female; console.log('🔊 Voice:', female.name); }
-          else {
-            const eng = voices.find(v => v.lang.startsWith('en'));
-            if (eng) utterance.voice = eng;
+          const chosen = female || inLang[0] || voices.find((v) => v.lang.startsWith('en'));
+          if (chosen) {
+            utterance.voice = chosen;
+            console.log('🔊 Voice:', chosen.name, chosen.lang);
           }
         };
 

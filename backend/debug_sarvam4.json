@@ -1,1 +1,0 @@
-[400, {"error": {"message": "Validation Error(s):\n- model: Input should be 'bulbul:v2', 'bulbul:v3-beta' or 'bulbul:v3'", "code": "invalid_request_error", "request_id": "20260328_c4c22c61-b58f-47fe-bc74-93bea0cee378"}}]

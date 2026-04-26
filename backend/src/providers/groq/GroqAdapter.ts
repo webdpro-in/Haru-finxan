@@ -40,19 +40,14 @@ export class GroqAdapter implements AIProvider {
   private model: string;
   private apiEndpoint: string;
 
-  constructor() {
-    this.apiKey = process.env.GROQ_API_KEY || '';
-    this.model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  constructor(apiKey?: string, model?: string) {
+    this.apiKey = apiKey || process.env.GROQ_API_KEY || '';
+    this.model = model || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
     this.apiEndpoint = 'https://api.groq.com/openai/v1';
 
     if (!this.apiKey) {
       console.warn('⚠️  GROQ_API_KEY not set. Groq adapter will fail at runtime.');
     }
-    
-    console.log('🤖 Groq Adapter initialized');
-    console.log('   Model:', this.model);
-    console.log('   Endpoint:', this.apiEndpoint);
-    console.log('   API Key:', this.apiKey ? '✓ Set' : '✗ Not set');
   }
 
   async chat(

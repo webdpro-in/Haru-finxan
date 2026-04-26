@@ -13,6 +13,7 @@ export interface ISpeechRecognitionEngine {
   start(): Promise<void>;
   stop(): void;
   isListening(): boolean;
+  setLanguage(lang: string): void;
   onTranscript(callback: (text: string, isFinal: boolean) => void): void;
   onEnd(callback: (finalText: string) => void): void;
   onError(callback: (error: string) => void): void;
@@ -202,6 +203,10 @@ class WebSpeechEngine implements ISpeechRecognitionEngine {
     return this.isActive;
   }
 
+  setLanguage(lang: string) {
+    this.recognition.lang = lang;
+  }
+
   onTranscript(callback: (text: string, isFinal: boolean) => void) {
     this.transcriptCallback = callback;
   }
@@ -285,6 +290,13 @@ export class RealtimeSpeechService {
    */
   isListening(): boolean {
     return this.engine.isListening();
+  }
+
+  /**
+   * Set the recognition language (e.g. 'en-US' or 'hi-IN').
+   */
+  setLanguage(lang: string) {
+    this.engine.setLanguage(lang);
   }
 
   /**

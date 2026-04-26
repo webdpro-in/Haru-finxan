@@ -1,0 +1,117 @@
+.upgrade-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+.upgrade-modal {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+}
+
+.upgrade-close {
+  position: absolute;
+  top: 14px; right: 16px;
+  background: transparent;
+  border: none;
+  font-size: 26px;
+  color: #64748b;
+  cursor: pointer;
+  line-height: 1;
+}
+.upgrade-close:hover { color: #0f172a; }
+
+.upgrade-header { text-align: center; margin-bottom: 22px; }
+.upgrade-emoji { font-size: 36px; }
+.upgrade-header h2 {
+  font-size: 22px;
+  margin-top: 6px;
+  color: #0f172a;
+  font-weight: 700;
+}
+.upgrade-header p { color: #475569; margin-top: 6px; font-size: 14px; }
+
+.upgrade-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) {
+  .upgrade-options { grid-template-columns: 1fr; }
+}
+
+.upgrade-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.upgrade-card-paid {
+  border: 2px solid #6366f1;
+  background: linear-gradient(180deg, rgba(99,102,241,0.06), transparent);
+}
+
+.upgrade-card-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.upgrade-card-price {
+  margin-top: 4px;
+  color: #6366f1;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.upgrade-card ul {
+  margin: 14px 0 16px;
+  padding-left: 18px;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.6;
+  flex: 1;
+}
+
+.upgrade-button {
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #0f172a;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.upgrade-button:hover:not(:disabled) { background: #f1f5f9; }
+
+.upgrade-button-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+}
+.upgrade-button-primary:hover:not(:disabled) { opacity: 0.93; }
+.upgrade-button-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.upgrade-error {
+  margin-top: 14px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
