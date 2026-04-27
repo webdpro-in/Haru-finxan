@@ -10,6 +10,7 @@ import { GestureRouter } from './GestureRouter';
 import { sessionManager } from './SessionManager';
 import { HARU_GREETING_MESSAGE } from '../config/systemPrompt';
 import { useAppStore } from '../store/useAppStore';
+import { detectLanguage } from '../utils/languageDetect';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -27,7 +28,20 @@ export class AIService {
 
   public async query(userInput: string): Promise<AIResponse> {
     try {
-      const { subject, language, mode } = useAppStore.getState();
+      const store = useAppStore.getState();
+      const { subject, mode } = store;
+      // Auto-detect language from the user message and update the store so
+      // voice + UI reflect it. The manual toggle in the navbar still wins:
+      // if the user explicitly switched to Hindi but typed in English, we
+      // respect the toggle rather than flipping back.
+      const detected = detectLanguage(userInput);
+      let language = store.language;
+      // Promote to detected Indic language whenever its script dominates the
+      // input — strong signal the student wants to converse in that language.
+      if (detected !== 'en' && detected !== language) {
+        store.setLanguage(detected);
+        language = detected;
+      }
       const conversationHistory = sessionManager.getConversationHistory();
 
       const response = await axios.post(
@@ -53,6 +67,9 @@ export class AIService {
       if (typeof remaining === 'number') {
         useAppStore.getState().setCredits(remaining);
       }
+
+      // Successful exchange counts as activity for the streak system.
+      useAppStore.getState().recordStreakActivity();
 
       return { text: aiText, segments: optimizedSegments, images };
     } catch (error) {

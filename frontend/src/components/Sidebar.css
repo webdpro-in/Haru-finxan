@@ -370,3 +370,94 @@
   cursor: pointer;
 }
 .sidebar-cta:hover { opacity: 0.93; }
+
+/* ─── New Chat button + chat history list ─────────────────────────── */
+.sidebar-newchat {
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+.sidebar-newchat:hover { opacity: 0.92; }
+.sidebar-newchat-plus { font-size: 18px; line-height: 1; font-weight: 400; }
+
+.sidebar-history {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+  overflow-y: auto;
+  max-height: 50vh;
+}
+.sidebar-history-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  padding: 4px 8px 6px;
+}
+.sidebar-empty {
+  font-size: 12px;
+  color: #9ca3af;
+  padding: 8px 10px;
+  font-style: italic;
+}
+.sidebar-chat-item {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 9px 30px 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: background 0.15s ease;
+}
+.sidebar-chat-item:hover { background: #f3f4f6; }
+.sidebar-chat-item.active {
+  background: #eef2ff;
+  box-shadow: inset 2px 0 0 #6366f1;
+}
+.sidebar-chat-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-chat-time {
+  font-size: 11px;
+  color: #9ca3af;
+}
+.sidebar-chat-delete {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 20px; height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #9ca3af;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.sidebar-chat-item:hover .sidebar-chat-delete { opacity: 1; }
+.sidebar-chat-delete:hover { background: #fee2e2; color: #dc2626; }

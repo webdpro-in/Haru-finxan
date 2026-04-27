@@ -7,13 +7,18 @@
 import { MotionConfig, GestureType, MotionName } from '../types';
 
 export const MOTION_MAPPING: Record<GestureType, MotionName[]> = {
-  idle: ['haru_g_idle'],
+  idle: ['haru_g_idle', 'haru_g_m26'],
   listening: ['haru_g_idle'],
-  greeting: ['haru_g_m01', 'haru_g_m02', 'haru_g_m03', 'haru_g_m04', 'haru_g_m05'],
+  greeting: ['haru_g_m02', 'haru_g_m03', 'haru_g_m04', 'haru_g_m05', 'haru_g_m25'],
+  // m01 is the dedicated head-nod motion — own its own gesture for affirmation.
+  nodding: ['haru_g_m01'],
+  // Hand pointing toward the Visual Aids panel (right side of screen).
   pointLeft: ['haru_g_m06', 'haru_g_m07', 'haru_g_m08', 'haru_g_m09', 'haru_g_m13', 'haru_g_m14', 'haru_g_m15', 'haru_g_m22'],
   pointRight: ['haru_g_m16', 'haru_g_m17', 'haru_g_m18', 'haru_g_m19', 'haru_g_m23'],
   emphasis: ['haru_g_m10', 'haru_g_m11', 'haru_g_m12', 'haru_g_m24'],
   warning: ['haru_g_m20', 'haru_g_m21'],
+  // Reuse the relaxed-idle motion for "let me think" — gentle, not action-y.
+  thinking: ['haru_g_m26'],
 };
 
 export const MOTION_CONFIGS: MotionConfig[] = [

@@ -12,9 +12,20 @@ export const synthesizeRouter = express.Router();
 
 synthesizeRouter.post('/', ValidationMiddleware.synthesize, async (req, res) => {
   try {
-    const { text, voiceId = 'Joanna', languageCode = 'en-US' } = req.body;
+    const {
+      text,
+      voiceId = 'Joanna',
+      languageCode = 'en-US',
+      voiceGender,
+    } = req.body as {
+      text: string;
+      voiceId?: string;
+      languageCode?: string;
+      voiceGender?: 'male' | 'female';
+    };
     const ttsProvider = await ProviderRegistry.getTTSProvider();
-    const audioUrl = await ttsProvider.synthesize(text, voiceId, languageCode);
+    // Most providers ignore voiceGender; ElevenLabs uses it via the 4th arg.
+    const audioUrl = await (ttsProvider as any).synthesize(text, voiceId, languageCode, voiceGender);
     res.json({ audioUrl });
   } catch (error: any) {
     console.error('Synthesis error:', error);

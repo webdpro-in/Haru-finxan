@@ -62,15 +62,35 @@ export const ModeToggle: React.FC = () => {
   );
 };
 
+/**
+ * Language dropdown — Haru speaks/replies in any of the supported Indian
+ * languages.  Auto-detection from input still wins; this is the manual
+ * override.  Native script labels keep the picker recognisable.
+ */
+const LANGUAGES: { id: Language; label: string }[] = [
+  { id: 'en', label: '🇬🇧 English' },
+  { id: 'hi', label: '🇮🇳 हिन्दी' },
+  { id: 'ta', label: '🇮🇳 தமிழ்' },
+  { id: 'te', label: '🇮🇳 తెలుగు' },
+  { id: 'kn', label: '🇮🇳 ಕನ್ನಡ' },
+  { id: 'bn', label: '🇮🇳 বাংলা' },
+];
+
 export const LanguageToggle: React.FC = () => {
   const language = useAppStore((s) => s.language);
   const setLanguage = useAppStore((s) => s.setLanguage);
 
-  const cycle = () => setLanguage((language === 'en' ? 'hi' : 'en') as Language);
-
   return (
-    <button className="language-toggle" onClick={cycle} title="Switch language">
-      {language === 'en' ? '🇬🇧 EN' : '🇮🇳 हिं'}
-    </button>
+    <select
+      className="subject-select"
+      value={language}
+      onChange={(e) => setLanguage(e.target.value as Language)}
+      title="Choose language"
+      aria-label="Choose language"
+    >
+      {LANGUAGES.map((l) => (
+        <option key={l.id} value={l.id}>{l.label}</option>
+      ))}
+    </select>
   );
 };

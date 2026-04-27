@@ -6,6 +6,8 @@
 
 import axios from 'axios';
 import { lipSyncService } from './LipSyncService';
+import { idleAnimator } from './IdleAnimator';
+import { cleanTextForTTS, mathSymbolsToWords } from '../utils/textCleaner';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -77,15 +79,31 @@ export class SpeechController {
   public async textToSpeech(text: string): Promise<string> {
     // Lazy import to avoid circular issues at module init
     const { useAppStore } = await import('../store/useAppStore');
-    const language = useAppStore.getState().language;
-    const languageCode = language === 'hi' ? 'hi-IN' : 'en-US';
-    const voiceId = language === 'hi' ? 'Aditi' : 'Joanna';
+    const { bcp47ForLanguage } = await import('../utils/languageDetect');
+    const { getCharacter } = await import('../config/characters');
+    const state = useAppStore.getState();
+    const language = state.language;
+    const character = getCharacter(state.character);
+    const languageCode = bcp47ForLanguage(language);
+    // voiceId is provider-specific. For ElevenLabs the backend routes by
+    // gender + language; for AWS Polly we map to a sensible default.
+    const pollyVoice = character.voiceGender === 'male'
+      ? (language === 'hi' ? 'Aditya' : 'Matthew')
+      : (language === 'hi' ? 'Aditi'  : 'Joanna');
+    const voiceId = pollyVoice;
+    const voiceGender = character.voiceGender;
+
+    // Clean text: remove special characters but preserve math symbols
+    let cleanedText = cleanTextForTTS(text);
+    // Convert math symbols to spoken words
+    cleanedText = mathSymbolsToWords(cleanedText);
 
     try {
       const response = await axios.post(`${API_BASE_URL}/synthesize`, {
-        text,
+        text: cleanedText,
         voiceId,
         languageCode,
+        voiceGender,
       });
       if (response.data?.audioUrl) return response.data.audioUrl;
     } catch (error) {
@@ -93,7 +111,7 @@ export class SpeechController {
       console.info('Backend TTS unavailable, using browser speech.');
     }
 
-    const payload = JSON.stringify({ text, voiceId, languageCode });
+    const payload = JSON.stringify({ text: cleanedText, voiceId, languageCode, voiceGender });
     return `browser-tts://${btoa(unescape(encodeURIComponent(payload)))}`;
   }
 
@@ -116,7 +134,10 @@ export class SpeechController {
       try {
         const encoded = browserTtsUrl.replace('browser-tts://', '');
         const decoded = atob(encoded);
-        const payload = JSON.parse(decoded) as { text: string; voiceId: string; languageCode: string };
+        const payload = JSON.parse(decoded) as {
+          text: string; voiceId: string; languageCode: string;
+          voiceGender?: 'male' | 'female';
+        };
 
         console.log('🔊 Web Speech API TTS | length:', payload.text.length);
 
@@ -133,13 +154,24 @@ export class SpeechController {
         const pickVoice = () => {
           const voices = window.speechSynthesis.getVoices();
           const inLang = voices.filter((v) => v.lang.toLowerCase().startsWith(langPrefix));
-          const female = inLang.find((v) =>
-            /female|samantha|victoria|karen|aria|ava|jenny|zira|kalpana|swara|google.*hindi.*female/i.test(v.name)
-          );
-          const chosen = female || inLang[0] || voices.find((v) => v.lang.startsWith('en'));
+          
+          // Enhanced voice patterns for better Indian language support
+          const FEMALE_RE = /female|samantha|victoria|karen|aria|ava|jenny|zira|kalpana|swara|lekha|veena|google.*hindi.*female|google.*tamil.*female|google.*telugu.*female|google.*kannada.*female|google.*bengali.*female|google.*us.*english.*female|emma|shruti/i;
+          const MALE_RE   = /male|david|mark|alex|fred|daniel|google.*hindi.*male|google.*tamil.*male|google.*telugu.*male|google.*kannada.*male|google.*bengali.*male|google.*us.*english.*male|james|aaron|matthew|ravi|hemant/i;
+          
+          const wantMale = payload.voiceGender === 'male';
+          
+          // Try to find a voice matching both language and gender
+          const preferred = inLang.find((v) => (wantMale ? MALE_RE : FEMALE_RE).test(v.name));
+          
+          // Fallback: any voice in the target language, or English
+          const chosen = preferred || inLang[0] || voices.find((v) => v.lang.startsWith('en'));
+          
           if (chosen) {
             utterance.voice = chosen;
-            console.log('🔊 Voice:', chosen.name, chosen.lang);
+            console.log(`🔊 Voice (${payload.voiceGender || 'female'}):`, chosen.name, chosen.lang);
+          } else {
+            console.warn(`⚠️ No suitable voice found for ${langCode}, using default`);
           }
         };
 
@@ -150,6 +182,19 @@ export class SpeechController {
         }
 
         utterance.onstart = () => { lipSyncService.startSimpleLipSync(); };
+        // Drive a mouth pulse per word boundary, plus a sentence-end head nod
+        // when the current word ends a sentence — gives Haru rhythm + emphasis.
+        utterance.onboundary = (ev) => {
+          if (ev.name === 'word') {
+            lipSyncService.pulseFromBoundary();
+            // SpeechSynthesisEvent doesn't expose the word — use charIndex+length
+            // to inspect the trailing punctuation in the source text.
+            const idx = ev.charIndex ?? 0;
+            const len = (ev as any).charLength ?? 0;
+            const tail = payload.text.slice(idx + len, idx + len + 2);
+            if (/^\s*[.!?।]/.test(tail)) idleAnimator.nodOnce(0.8);
+          }
+        };
         utterance.onend = () => { lipSyncService.stopLipSync(); resolve(); };
         utterance.onerror = (e) => {
           console.error('SpeechSynthesis error:', e.error);
@@ -167,16 +212,27 @@ export class SpeechController {
   }
 
   /**
-   * Play from HTTP audio URL using HTMLAudioElement with lip sync
+   * Play from HTTP audio URL using HTMLAudioElement with lip sync.
+   * For ElevenLabs (`data:audio/mpeg;base64,...`) and S3 URLs alike.
+   * Periodic nods give the impression of natural sentence-end emphasis since
+   * HTMLAudio has no word-boundary events to hook into.
    */
   private async playWithAudioElement(audioUrl: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.stopAudio();
       this.currentAudio = new Audio(audioUrl);
-      this.currentAudio.onended = () => { lipSyncService.stopLipSync(); resolve(); };
-      this.currentAudio.onerror = () => { lipSyncService.stopLipSync(); reject(new Error('Audio playback failed')); };
-      this.currentAudio.onplay = () => { lipSyncService.startLipSync(this.currentAudio!); };
-      this.currentAudio.play().catch((e) => { lipSyncService.stopLipSync(); reject(e); });
+      let nodTimer: ReturnType<typeof setInterval> | null = null;
+      const stopNods = () => { if (nodTimer) { clearInterval(nodTimer); nodTimer = null; } };
+
+      this.currentAudio.onended = () => { stopNods(); lipSyncService.stopLipSync(); resolve(); };
+      this.currentAudio.onerror = () => { stopNods(); lipSyncService.stopLipSync(); reject(new Error('Audio playback failed')); };
+      this.currentAudio.onplay = () => {
+        lipSyncService.startLipSync(this.currentAudio!);
+        // First nod ~700ms in (after the opening clause), then every 6.5s.
+        setTimeout(() => idleAnimator.nodOnce(0.7), 700);
+        nodTimer = setInterval(() => idleAnimator.nodOnce(0.7), 6500);
+      };
+      this.currentAudio.play().catch((e) => { stopNods(); lipSyncService.stopLipSync(); reject(e); });
     });
   }
 

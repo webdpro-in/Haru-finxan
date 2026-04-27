@@ -9,6 +9,7 @@ import { TeachingPanel } from './components/TeachingPanel';
 import { VisualPanel } from './components/VisualPanel';
 import { InputPanel } from './components/InputPanel';
 import { DebugPanel } from './components/DebugPanel';
+import { CharacterDebugPanel } from './components/CharacterDebugPanel';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { NotificationSystem, Notification } from './components/NotificationSystem';
@@ -21,9 +22,37 @@ import { aiService } from './services/AIService';
 import { authService } from './services/AuthService';
 import { motionManager } from './services/MotionManager';
 import { sessionManager } from './services/SessionManager';
+import './utils/debugCharacter'; // Load debug utilities
 import './App.css';
 
-const MODEL_PATH = '/haru_greeter_pro_jp/runtime/haru_greeter_t05.model3.json';
+/**
+ * CharacterStage — fades the active character in on mount, out on swap.
+ *
+ * `key={character}` on the stage div tells React to discard and remount the
+ * subtree whenever the character id changes.  The fresh subtree starts with
+ * the `enter` class (opacity:0, slight translateY) and animates to fully
+ * visible — gives a smooth "step forward" entrance instead of a pop.
+ */
+function CharacterStage() {
+  const characterId = useAppStore((s) => s.character);
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    setEntered(false);
+    // Next frame so the initial enter style commits before transitioning.
+    const id = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(id);
+  }, [characterId]);
+
+  return (
+    <div
+      key={characterId}
+      className={`character-stage ${entered ? 'entered' : 'enter'}`}
+    >
+      <Live2DCanvas />
+    </div>
+  );
+}
 
 function App() {
   const setLeftPanelContent = useAppStore((s) => s.setLeftPanelContent);
@@ -87,8 +116,11 @@ function App() {
         </div>
 
         <div className="center-section">
+          {/* `key` triggers an unmount/remount on character switch, which
+              fires the CSS opacity/transform transition on .character-stage
+              for a smooth fade-and-rise instead of a hard pop. */}
           <div className="character-container">
-            <Live2DCanvas modelPath={MODEL_PATH} />
+            <CharacterStage />
           </div>
         </div>
 
@@ -99,6 +131,7 @@ function App() {
 
       <InputPanel />
       <DebugPanel />
+      <CharacterDebugPanel />
 
       <Onboarding />
       <UpgradeModal />

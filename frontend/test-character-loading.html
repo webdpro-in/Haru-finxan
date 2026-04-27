@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Loading Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #0f172a;
+        }
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 4px 0;
+        }
+        .status.success { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .status.pending { background: #fef3c7; color: #92400e; }
+        button {
+            padding: 10px 20px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 4px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        pre {
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Character Loading Diagnostic Tool</h1>
+    
+    <div class="test-section">
+        <h2>1. Check Required Libraries</h2>
+        <div id="lib-check"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Check Character Files</h2>
+        <button onclick="checkCharacterFiles('haru')">Test Haru</button>
+        <button onclick="checkCharacterFiles('ren_pro')">Test Ren Pro</button>
+        <div id="file-check"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Check LocalStorage</h2>
+        <button onclick="checkLocalStorage()">Check Storage</button>
+        <button onclick="clearLocalStorage()">Clear Storage</button>
+        <div id="storage-check"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test PIXI Initialization</h2>
+        <button onclick="testPixi()">Test PIXI</button>
+        <div id="pixi-test"></div>
+    </div>
+
+    <script src="/lib/live2d.min.js"></script>
+    <script src="/lib/live2dcubismcore.min.js"></script>
+    <script>
+        // Check libraries
+        function checkLibraries() {
+            const output = document.getElementById('lib-check');
+            let html = '';
+            
+            if (window.Live2D) {
+                html += '<div class="status success">✓ Cubism 2 Core loaded</div><br>';
+            } else {
+                html += '<div class="status error">✗ Cubism 2 Core NOT loaded</div><br>';
+            }
+            
+            if (window.Live2DCubismCore) {
+                html += '<div class="status success">✓ Cubism 4 Core loaded (Version: ' + window.Live2DCubismCore.Version + ')</div><br>';
+            } else {
+                html += '<div class="status error">✗ Cubism 4 Core NOT loaded</div><br>';
+            }
+            
+            output.innerHTML = html;
+        }
+
+        // Check character files
+        async function checkCharacterFiles(characterId) {
+            const output = document.getElementById('file-check');
+            output.innerHTML = '<div class="status pending">Checking files...</div>';
+            
+            const characters = {
+                haru: {
+                    modelPath: '/haru_greeter_pro_jp/runtime/haru_greeter_t05.model3.json',
+                    label: 'Haru'
+                },
+                ren_pro: {
+                    modelPath: '/ren_pro_en/runtime/ren.model3.json',
+                    label: 'Ren Pro'
+                }
+            };
+            
+            const char = characters[characterId];
+            if (!char) {
+                output.innerHTML = '<div class="status error">Unknown character: ' + characterId + '</div>';
+                return;
+            }
+            
+            let html = '<h3>Testing ' + char.label + '</h3>';
+            
+            try {
+                // Check model3.json
+                const response = await fetch(char.modelPath);
+                if (!response.ok) {
+                    html += '<div class="status error">✗ model3.json not found (HTTP ' + response.status + ')</div>';
+                    output.innerHTML = html;
+                    return;
+                }
+                html += '<div class="status success">✓ model3.json found</div>';
+                
+                const modelData = await response.json();
+                html += '<pre>' + JSON.stringify(modelData, null, 2).substring(0, 500) + '...</pre>';
+                
+                // Check required files
+                const basePath = char.modelPath.substring(0, char.modelPath.lastIndexOf('/'));
+                const filesToCheck = [
+                    modelData.FileReferences.Moc,
+                    ...(modelData.FileReferences.Textures || [])
+                ];
+                
+                for (const file of filesToCheck) {
+                    const filePath = basePath + '/' + file;
+                    const fileResponse = await fetch(filePath, { method: 'HEAD' });
+                    if (fileResponse.ok) {
+                        html += '<div class="status success">✓ ' + file + '</div>';
+                    } else {
+                        html += '<div class="status error">✗ ' + file + ' (HTTP ' + fileResponse.status + ')</div>';
+                    }
+                }
+                
+                html += '<div class="status success">All files validated!</div>';
+            } catch (error) {
+                html += '<div class="status error">Error: ' + error.message + '</div>';
+            }
+            
+            output.innerHTML = html;
+        }
+
+        // Check localStorage
+        function checkLocalStorage() {
+            const output = document.getElementById('storage-check');
+            const storage = localStorage.getItem('haru-app');
+            
+            if (storage) {
+                const data = JSON.parse(storage);
+                output.innerHTML = '<div class="status success">Storage found</div><pre>' + 
+                    JSON.stringify(data, null, 2) + '</pre>';
+            } else {
+                output.innerHTML = '<div class="status pending">No storage data found</div>';
+            }
+        }
+
+        function clearLocalStorage() {
+            localStorage.removeItem('haru-app');
+            document.getElementById('storage-check').innerHTML = 
+                '<div class="status success">Storage cleared! Reload the app to reset.</div>';
+        }
+
+        // Test PIXI
+        async function testPixi() {
+            const output = document.getElementById('pixi-test');
+            output.innerHTML = '<div class="status pending">Testing PIXI...</div>';
+            
+            try {
+                // Create a test container
+                const container = document.createElement('div');
+                container.style.width = '600px';
+                container.style.height = '600px';
+                container.style.position = 'relative';
+                document.body.appendChild(container);
+                
+                const canvas = document.createElement('canvas');
+                container.appendChild(canvas);
+                
+                // Try to load PIXI dynamically
+                const PIXI = await import('https://cdn.jsdelivr.net/npm/pixi.js@7.3.2/dist/pixi.min.mjs');
+                
+                const app = new PIXI.Application({
+                    view: canvas,
+                    width: 600,
+                    height: 600,
+                    backgroundColor: 0xffffff,
+                    backgroundAlpha: 0.5,
+                    antialias: true,
+                });
+                
+                output.innerHTML = '<div class="status success">✓ PIXI initialized successfully!</div>' +
+                    '<div>Renderer: ' + app.renderer.type + '</div>' +
+                    '<div>Resolution: ' + app.renderer.resolution + '</div>' +
+                    '<div>Canvas size: ' + app.screen.width + 'x' + app.screen.height + '</div>';
+                
+                // Cleanup
+                setTimeout(() => {
+                    app.destroy(true);
+                    container.remove();
+                }, 2000);
+            } catch (error) {
+                output.innerHTML = '<div class="status error">✗ PIXI test failed: ' + error.message + '</div>';
+            }
+        }
+
+        // Run initial checks
+        window.addEventListener('DOMContentLoaded', () => {
+            checkLibraries();
+        });
+    </script>
+</body>
+</html>

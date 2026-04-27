@@ -12,9 +12,20 @@ interface ChatMessage {
   timestamp: string;
 }
 
+/** A finished or in-progress conversation thread. Persisted to localStorage. */
+export interface ChatSession {
+  id: string;
+  title: string;          // first user message, truncated
+  createdAt: number;      // unix ms
+  updatedAt: number;
+  messages: ChatMessage[];
+}
+
 export type Subject = 'general' | 'math' | 'science' | 'english' | 'coding' | 'history';
 export type Mode = 'tutor' | 'rubric';
-export type Language = 'en' | 'hi';
+export type Language = 'en' | 'hi' | 'ta' | 'te' | 'kn' | 'bn';
+/** Character id from the registry in `config/characters.ts`. */
+export type CharacterId = string;
 
 export interface User {
   id: string;
@@ -55,6 +66,16 @@ interface AppState {
   userApiKey: string | null;
   userApiProvider: 'groq' | 'openai' | 'gemini' | null;
   hasOnboarded: boolean;
+
+  // Persisted: past chat sessions + streak tracking
+  chatSessions: ChatSession[];
+  activeSessionId: string | null;
+  streakCount: number;
+  streakLastActiveDay: string | null; // YYYY-MM-DD, account-local
+  streakDays: string[];               // every active day, oldest first
+
+  // Selected on-screen character (haru | ren_pro | …) — persisted.
+  character: CharacterId;
 
   // UI dialogs
   upgradeOpen: boolean;
@@ -97,6 +118,19 @@ interface AppState {
   setUpgradeOpen: (v: boolean) => void;
   setApiConfigOpen: (v: boolean) => void;
 
+  // Actions — chat sessions
+  newChatSession: () => void;
+  loadChatSession: (id: string) => void;
+  deleteChatSession: (id: string) => void;
+  /** Persist current chatHistory back into the active session record. */
+  saveCurrentSession: () => void;
+
+  // Actions — streak (called once per app load)
+  recordStreakActivity: () => void;
+
+  // Actions — character switching
+  setCharacter: (id: CharacterId) => void;
+
   reset: () => void;
 }
 
@@ -133,16 +167,59 @@ export const useAppStore = create<AppState>()(
       upgradeOpen: false,
       apiConfigOpen: false,
 
+      chatSessions: [],
+      activeSessionId: null,
+      streakCount: 0,
+      streakLastActiveDay: null,
+      streakDays: [],
+
+      character: 'haru',
+
       setLeftPanelContent: (content) => set({ leftPanelContent: content }),
       addRightPanelImage: (image) => set((s) => ({ rightPanelImages: [...s.rightPanelImages, image] })),
       clearRightPanelImages: () => set({ rightPanelImages: [] }),
       addChatMessage: (role, content) =>
-        set((s) => ({
-          chatHistory: [
-            ...s.chatHistory,
-            { role, content, timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) },
-          ],
-        })),
+        set((s) => {
+          const msg: ChatMessage = {
+            role,
+            content,
+            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          };
+          const chatHistory = [...s.chatHistory, msg];
+
+          // Auto-create or update the active session so history persists.
+          let { chatSessions, activeSessionId } = s;
+          if (!activeSessionId) {
+            // First user message of a fresh chat starts a new session.
+            const id = `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+            const title = role === 'user'
+              ? content.slice(0, 60)
+              : 'New conversation';
+            const session: ChatSession = {
+              id, title,
+              createdAt: Date.now(), updatedAt: Date.now(),
+              messages: chatHistory,
+            };
+            chatSessions = [session, ...chatSessions].slice(0, 50); // cap at 50
+            activeSessionId = id;
+          } else {
+            chatSessions = chatSessions.map((sess) =>
+              sess.id === activeSessionId
+                ? {
+                    ...sess,
+                    messages: chatHistory,
+                    updatedAt: Date.now(),
+                    // Adopt the first user message as the title if we still have a placeholder.
+                    title: sess.title === 'New conversation' && role === 'user'
+                      ? content.slice(0, 60)
+                      : sess.title,
+                  }
+                : sess
+            );
+          }
+
+          return { chatHistory, chatSessions, activeSessionId };
+        }),
       clearChatHistory: () => set({ chatHistory: [] }),
       addGeneratedImage: (imageUrl) => set((s) => ({ generatedImages: [...s.generatedImages, imageUrl] })),
       clearGeneratedImages: () => set({ generatedImages: [] }),
@@ -174,6 +251,77 @@ export const useAppStore = create<AppState>()(
       setUpgradeOpen: (upgradeOpen) => set({ upgradeOpen }),
       setApiConfigOpen: (apiConfigOpen) => set({ apiConfigOpen }),
 
+      // Chat session actions
+      newChatSession: () =>
+        set({
+          chatHistory: [],
+          activeSessionId: null,
+          generatedImages: [],
+          leftPanelContent: '',
+          teachingSegments: [],
+        }),
+
+      loadChatSession: (id) =>
+        set((s) => {
+          const sess = s.chatSessions.find((x) => x.id === id);
+          if (!sess) return s;
+          return {
+            ...s,
+            chatHistory: sess.messages,
+            activeSessionId: id,
+            generatedImages: [],
+            leftPanelContent: sess.messages[sess.messages.length - 1]?.content || '',
+            teachingSegments: [],
+          };
+        }),
+
+      deleteChatSession: (id) =>
+        set((s) => {
+          const chatSessions = s.chatSessions.filter((x) => x.id !== id);
+          const wasActive = s.activeSessionId === id;
+          return {
+            chatSessions,
+            activeSessionId: wasActive ? null : s.activeSessionId,
+            chatHistory: wasActive ? [] : s.chatHistory,
+          };
+        }),
+
+      saveCurrentSession: () =>
+        set((s) => {
+          if (!s.activeSessionId) return s;
+          return {
+            chatSessions: s.chatSessions.map((sess) =>
+              sess.id === s.activeSessionId
+                ? { ...sess, messages: s.chatHistory, updatedAt: Date.now() }
+                : sess
+            ),
+          };
+        }),
+
+      setCharacter: (character) => set({ character }),
+
+      // Streak: bump count when there's been activity today.  Resets to 1 if
+      // there's been a gap > 1 calendar day.  Today's date is the local
+      // YYYY-MM-DD so streaks roll over at the user's midnight, not UTC.
+      recordStreakActivity: () =>
+        set((s) => {
+          const today = new Date().toISOString().slice(0, 10);
+          if (s.streakLastActiveDay === today) return s; // already counted
+
+          const yesterday = (() => {
+            const d = new Date();
+            d.setDate(d.getDate() - 1);
+            return d.toISOString().slice(0, 10);
+          })();
+
+          const continued = s.streakLastActiveDay === yesterday;
+          return {
+            streakLastActiveDay: today,
+            streakCount: continued ? s.streakCount + 1 : 1,
+            streakDays: [...(s.streakDays || []), today].slice(-180), // last 6 mo
+          };
+        }),
+
       reset: () =>
         set({
           leftPanelContent: '',
@@ -203,6 +351,12 @@ export const useAppStore = create<AppState>()(
         userApiKey: s.userApiKey,
         userApiProvider: s.userApiProvider,
         hasOnboarded: s.hasOnboarded,
+        chatSessions: s.chatSessions,
+        activeSessionId: s.activeSessionId,
+        streakCount: s.streakCount,
+        streakLastActiveDay: s.streakLastActiveDay,
+        streakDays: s.streakDays,
+        character: s.character,
       }),
     }
   )

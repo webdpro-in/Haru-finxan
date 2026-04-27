@@ -241,6 +241,54 @@
   font-size: 16px;
 }
 
+/* ─── Character picker ────────────────────────────────────────────── */
+.character-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.character-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  background: #f9fafb;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+
+.character-option:hover {
+  transform: translateY(-1px);
+  background: #f3f4f6;
+}
+
+.character-option.active {
+  border-color: #6366f1;
+  background: #eef2ff;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.18);
+}
+
+.character-emoji {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.character-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.character-meta {
+  font-size: 11px;
+  color: #6b7280;
+}
+
 @media (max-width: 768px) {
   .settings-panel {
     width: 100%;

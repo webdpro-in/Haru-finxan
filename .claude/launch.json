@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "haru-frontend",
+      "runtimeExecutable": "echo",
+      "runtimeArgs": ["already running via Bash on :3000"],
+      "port": 3000
+    }
+  ]
+}

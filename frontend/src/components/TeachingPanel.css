@@ -1,5 +1,6 @@
 /* Teaching Panel - Chat with Glass Morphism */
 .teaching-panel {
+  position: relative;
   width: 100%;
   height: 100%;
   background: rgba(255, 255, 255, 0.15);
@@ -10,14 +11,39 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  overflow: hidden;
+}
+
+/* Floating "jump to latest" pill, only rendered when user has scrolled up. */
+.chat-jump-bottom {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 7px 14px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+  animation: chat-jump-pop 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 4;
+}
+.chat-jump-bottom:hover { transform: translateX(-50%) translateY(-1px); }
+@keyframes chat-jump-pop {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 .panel-header {
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
 }
 
 .panel-header h2 {
@@ -30,8 +56,9 @@
 
 .panel-content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll !important;
   overflow-x: hidden;
+  min-height: 0;
 }
 
 .chat-content {
@@ -75,6 +102,9 @@
   line-height: 1.6;
   color: #1f2937;
   word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .chat-message.user .message-text {
@@ -114,22 +144,27 @@
   color: #d1d5db;
 }
 
-/* Custom scrollbar */
+/* Slim visible scrollbar */
+.panel-content {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.6) rgba(255, 255, 255, 0.2);
+}
+
+/* Slim visible scrollbar */
 .panel-content::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
-
 .panel-content::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
 }
-
 .panel-content::-webkit-scrollbar-thumb {
-  background: #e5e7eb;
-  border-radius: 3px;
+  background: rgba(99, 102, 241, 0.6);
+  border-radius: 4px;
 }
-
 .panel-content::-webkit-scrollbar-thumb:hover {
-  background: #d1d5db;
+  background: rgba(99, 102, 241, 0.8);
 }
 
 /* Responsive */

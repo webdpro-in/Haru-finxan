@@ -1,6 +1,11 @@
 /**
- * Sidebar — slim slide-in drawer.
- * Shows current user, credits/api-key state, links to API config + sign in/out.
+ * Sidebar — slide-in drawer.
+ *   • "+ New Chat" pinned at top
+ *   • List of past chat sessions (most recent first)
+ *   • Account / settings / sign-out at the bottom
+ *
+ * The active session is highlighted; clicking another session loads its
+ * history into the main chat panel.
  */
 
 import React, { useState } from 'react';
@@ -14,12 +19,30 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+const formatRelative = (ts: number): string => {
+  const diff = Date.now() - ts;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'Just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const d = Math.floor(hr / 24);
+  if (d < 7) return `${d}d ago`;
+  return new Date(ts).toLocaleDateString();
+};
+
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const user = useAppStore((s) => s.user);
   const credits = useAppStore((s) => s.credits);
   const userApiProvider = useAppStore((s) => s.userApiProvider);
   const setApiConfigOpen = useAppStore((s) => s.setApiConfigOpen);
   const setUpgradeOpen = useAppStore((s) => s.setUpgradeOpen);
+
+  const chatSessions = useAppStore((s) => s.chatSessions);
+  const activeSessionId = useAppStore((s) => s.activeSessionId);
+  const newChatSession = useAppStore((s) => s.newChatSession);
+  const loadChatSession = useAppStore((s) => s.loadChatSession);
+  const deleteChatSession = useAppStore((s) => s.deleteChatSession);
 
   const [authOpen, setAuthOpen] = useState(false);
 
@@ -28,11 +51,62 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
+  const handleSelect = (id: string) => {
+    loadChatSession(id);
+    onClose();
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm('Delete this conversation?')) deleteChatSession(id);
+  };
+
   return (
     <>
       <div className={`sidebar-overlay ${isOpen ? 'open' : ''}`} onClick={onClose} />
       <div className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-content">
+          <button
+            className="sidebar-newchat"
+            onClick={() => { newChatSession(); onClose(); }}
+            title="Start a fresh conversation"
+          >
+            <span className="sidebar-newchat-plus">＋</span>
+            New Chat
+          </button>
+
+          <div className="sidebar-history">
+            <div className="sidebar-history-label">Recent</div>
+            {chatSessions.length === 0 ? (
+              <div className="sidebar-empty">
+                No past chats yet — your conversations will appear here.
+              </div>
+            ) : (
+              chatSessions.map((sess) => (
+                <button
+                  key={sess.id}
+                  className={`sidebar-chat-item ${sess.id === activeSessionId ? 'active' : ''}`}
+                  onClick={() => handleSelect(sess.id)}
+                  title={sess.title}
+                >
+                  <span className="sidebar-chat-title">{sess.title || 'Untitled chat'}</span>
+                  <span className="sidebar-chat-time">{formatRelative(sess.updatedAt)}</span>
+                  <span
+                    className="sidebar-chat-delete"
+                    onClick={(e) => handleDelete(e, sess.id)}
+                    role="button"
+                    aria-label="Delete chat"
+                    tabIndex={0}
+                  >
+                    ×
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+
+          <div className="sidebar-spacer" />
+
           {user ? (
             <>
               <div className="sidebar-section sidebar-account">
@@ -56,37 +130,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 )}
               </div>
 
-              <div className="sidebar-spacer" />
-
               <div className="sidebar-bottom">
                 <button className="sidebar-menu-button" onClick={() => { setApiConfigOpen(true); onClose(); }}>
-                  <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633z" clipRule="evenodd"/></svg>
                   <span>API key settings</span>
                 </button>
                 <button className="sidebar-menu-button" onClick={handleLogout}>
-                  <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
                   <span>Sign out</span>
                 </button>
               </div>
             </>
           ) : (
-            <>
-              <div className="login-prompt">
-                <div className="login-emoji">🎓</div>
-                <p>Sign in to save your progress and credits.</p>
-              </div>
-              <div className="sidebar-bottom">
-                <button className="sidebar-cta" onClick={() => setAuthOpen(true)}>
-                  Sign in or register
-                </button>
-                <button
-                  className="sidebar-menu-button"
-                  onClick={() => { setApiConfigOpen(true); onClose(); }}
-                >
-                  <span>Use your own API key instead</span>
-                </button>
-              </div>
-            </>
+            <div className="sidebar-bottom">
+              <button className="sidebar-cta" onClick={() => setAuthOpen(true)}>
+                Sign in
+              </button>
+              <button
+                className="sidebar-menu-button"
+                onClick={() => { setApiConfigOpen(true); onClose(); }}
+              >
+                <span>Use your own API key</span>
+              </button>
+            </div>
           )}
         </div>
       </div>

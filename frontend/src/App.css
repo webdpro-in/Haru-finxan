@@ -67,6 +67,7 @@ body {
 .character-container {
   width: 100%;
   height: 100%;
+  min-height: 600px;
   position: relative;
   display: flex;
   align-items: center;
@@ -74,6 +75,27 @@ body {
   overflow: hidden;
   z-index: 5;
   pointer-events: none;
+}
+
+/* Character entrance — fades + rises into place when the user switches
+   characters.  Initial state is `enter`; we toggle to `entered` next frame
+   so the transition runs instead of being skipped on first paint. */
+.character-stage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+              transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.character-stage.enter {
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+}
+.character-stage.entered {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 /* LAYER 3: Input panel (fixed bottom) - handled by InputPanel.css */

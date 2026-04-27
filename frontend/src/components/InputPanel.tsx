@@ -15,6 +15,7 @@ import { realtimeSpeechService, RealtimeSpeechService } from '../services/Realti
 import { VoiceState } from '../types';
 import { shouldWave } from '../utils/greetingDetector';
 import { getRandomGreeting } from '../config/systemPrompt';
+import { bcp47ForLanguage } from '../utils/languageDetect';
 import './InputPanel.css';
 
 export const InputPanel: React.FC = () => {
@@ -36,10 +37,10 @@ export const InputPanel: React.FC = () => {
     setIsGeneratingImages,
   } = useAppStore();
 
-  // Sync recognition language with store (en-US / hi-IN)
+  // Sync recognition language with store (all 6 Indic languages supported)
   useEffect(() => {
     if (!RealtimeSpeechService.isSupported()) return;
-    realtimeSpeechService.setLanguage(language === 'hi' ? 'hi-IN' : 'en-US');
+    realtimeSpeechService.setLanguage(bcp47ForLanguage(language));
   }, [language]);
 
   // Setup real-time speech recognition callbacks
@@ -50,12 +51,23 @@ export const InputPanel: React.FC = () => {
       return;
     }
 
-    // Real-time transcript updates
+    // Real-time transcript updates.  First non-empty interim transcript
+    // while Haru is speaking interrupts her — that's how natural turn-taking
+    // works, the listener stops as soon as you start talking.
+    let interruptedThisTurn = false;
     realtimeSpeechService.onTranscript((text, isFinal) => {
       setLiveTranscript(text);
-      
+
+      if (text.trim() && !interruptedThisTurn && synchronizationCoordinator.isActive()) {
+        console.log('🛑 Voice interrupt — stopping Haru');
+        synchronizationCoordinator.interrupt();
+        setSpeaking(false);
+        interruptedThisTurn = true;
+      }
+
       if (isFinal) {
         console.log('📝 Final transcript:', text);
+        interruptedThisTurn = false; // reset for next utterance
       }
     });
 
@@ -100,6 +112,16 @@ export const InputPanel: React.FC = () => {
 
   const handleSubmit = async (text: string) => {
     if (!text.trim() || isProcessing) return;
+
+    // Conversational interrupt: if Haru is mid-explanation when the user
+    // submits a new message, stop her immediately and pivot to the new input.
+    // The previous teaching sequence is dropped — the new turn takes priority.
+    if (isSpeaking || synchronizationCoordinator.isActive()) {
+      console.log('🛑 User interrupted — stopping current explanation');
+      synchronizationCoordinator.interrupt();
+      setSpeaking(false);
+      setVoiceState(VoiceState.IDLE);
+    }
 
     setIsProcessing(true);
     setInputText('');

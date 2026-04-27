@@ -72,5 +72,5 @@ const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
 httpServer.listen(PORT, HOST, () => {
   logger.info(`Haru AI Teacher backend running on http://${HOST}:${PORT}`);
   logger.info(`Health: http://${HOST}:${PORT}/health`);
-  logger.info(`AI provider: ${process.env.AI_PROVIDER || 'groq'} | Image provider: ${process.env.IMAGE_PROVIDER || 'pollinations'}`);
+  logger.info(`AI provider: ${process.env.AI_PROVIDER || 'groq'} | Image provider: ${process.env.IMAGE_PROVIDER || 'wikimedia'}`);
 });

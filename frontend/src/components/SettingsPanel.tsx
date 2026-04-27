@@ -4,6 +4,8 @@
  */
 
 import React, { useState } from 'react';
+import { useAppStore } from '../store/useAppStore';
+import { CHARACTER_LIST } from '../config/characters';
 import './SettingsPanel.css';
 
 interface SettingsPanelProps {
@@ -12,6 +14,8 @@ interface SettingsPanelProps {
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
+  const character = useAppStore((s) => s.character);
+  const setCharacter = useAppStore((s) => s.setCharacter);
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
   const [confusionDetection, setConfusionDetection] = useState(true);
   const [anxietyCoach, setAnxietyCoach] = useState(true);
@@ -60,6 +64,32 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
       </div>
 
       <div className="settings-content">
+        {/* Change Character — switches the active 3D model on screen.
+            The voice gender follows automatically (male / female). */}
+        <div className="settings-section">
+          <h3 className="settings-section-title">
+            <span className="settings-section-icon">🎭</span>
+            Change Character
+          </h3>
+          <div className="character-grid">
+            {CHARACTER_LIST.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={`character-option ${character === c.id ? 'active' : ''}`}
+                onClick={() => setCharacter(c.id)}
+                title={`Switch to ${c.label}`}
+              >
+                <div className="character-emoji" aria-hidden>{c.emoji}</div>
+                <div className="character-name">{c.label}</div>
+                <div className="character-meta">
+                  {c.voiceGender === 'female' ? '♀ Female voice' : '♂ Male voice'}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Language Settings */}
         <div className="settings-section">
           <h3 className="settings-section-title">

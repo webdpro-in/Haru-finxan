@@ -7,55 +7,84 @@ import { GestureType, TeachingSegment } from '../types';
 
 export class GestureRouter {
   /**
-   * Analyze text and determine appropriate gestures
+   * Analyze text and determine appropriate gestures.
+   *
+   * Sentence-level routing precedence (first match wins):
+   *   1. greeting    → opening salutation
+   *   2. warning     → "be careful", "avoid"
+   *   3. emphasis    → "important", "remember"
+   *   4. nodding     → affirmation ("exactly", "yes", "right")
+   *   5. thinking    → questions back to the student / Socratic pauses
+   *   6. pointRight  → references to a visual ("see the diagram")
+   *   7. pointLeft   → default explanation gesture
+   *
+   * Each rule supports English + Hindi keywords so multilingual replies still
+   * get matched.  For other Indic scripts (Tamil/Telugu/Kannada/Bengali) the
+   * heuristic falls back to pointLeft + image detection only — better than
+   * misclassifying based on English keywords that happen to appear inline.
    */
   public static parseTeachingContent(text: string): TeachingSegment[] {
     const segments: TeachingSegment[] = [];
-    
-    // Split by sentences
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-    
+
+    // Split by sentence terminators in English + Devanagari (।) + ellipsis.
+    const sentences = text.match(/[^.!?।]+[.!?।]+/g) || [text];
+
+    let isFirst = true;
     for (const sentence of sentences) {
       const trimmed = sentence.trim();
       if (!trimmed) continue;
 
-      // Detect emphasis keywords
-      if (this.isEmphasis(trimmed)) {
-        segments.push({
-          type: 'emphasis',
-          content: trimmed,
-          gesture: 'emphasis',
-        });
+      let gesture: TeachingSegment['gesture'];
+      let type: TeachingSegment['type'] = 'text';
+      let imageQuery: string | undefined;
+
+      if (isFirst && this.isGreeting(trimmed)) {
+        gesture = 'greeting';
+      } else if (this.isWarning(trimmed)) {
+        gesture = 'warning';
+      } else if (this.isEmphasis(trimmed)) {
+        gesture = 'emphasis';
+        type = 'emphasis';
+      } else if (this.isAffirmation(trimmed)) {
+        gesture = 'nodding';
+      } else if (this.isQuestion(trimmed)) {
+        gesture = 'thinking';
+      } else if (this.hasImageReference(trimmed)) {
+        gesture = 'pointRight';
+        type = 'image';
+        imageQuery = this.extractImageQuery(trimmed);
+      } else {
+        gesture = 'pointLeft';
       }
-      // Detect warning keywords
-      else if (this.isWarning(trimmed)) {
-        segments.push({
-          type: 'text',
-          content: trimmed,
-          gesture: 'warning',
-        });
-      }
-      // Detect image references
-      else if (this.hasImageReference(trimmed)) {
-        const imageQuery = this.extractImageQuery(trimmed);
-        segments.push({
-          type: 'image',
-          content: trimmed,
-          gesture: 'pointRight',
-          imageQuery,
-        });
-      }
-      // Default text explanation
-      else {
-        segments.push({
-          type: 'text',
-          content: trimmed,
-          gesture: 'pointLeft',
-        });
-      }
+
+      segments.push({ type, content: trimmed, gesture, imageQuery });
+      isFirst = false;
     }
 
     return segments;
+  }
+
+  /** Greeting / salutation at the top of a reply. */
+  private static isGreeting(text: string): boolean {
+    const t = text.toLowerCase();
+    return /\b(hello|hi|hey|welcome|namaste|good morning|good afternoon)\b/.test(t)
+      || /(नमस्ते|नमस्कार|स्वागत|वणक्कम்|నమస్కారం|ನಮಸ್ಕಾರ|নমস্কার)/.test(text);
+  }
+
+  /** Affirmations — Haru should nod here. */
+  private static isAffirmation(text: string): boolean {
+    const t = text.toLowerCase();
+    return /\b(exactly|that's right|that is right|correct|well done|great job|yes,|nicely done|spot on|perfect)\b/.test(t)
+      || /(शाबाश|बिल्कुल सही|बहुत अच्छा|सही|एकदम सही)/.test(text);
+  }
+
+  /** Sentence ending in a question mark — "Does that make sense?" cues a thinking pose. */
+  private static isQuestion(text: string): boolean {
+    if (!/[?？]\s*$/.test(text)) return false;
+    const t = text.toLowerCase();
+    // Skip rhetoricals where Haru is making a declarative point — those still
+    // benefit from pointLeft.  Heuristic: short questions are real prompts.
+    return text.split(/\s+/).length < 18 || /\b(what do you think|does that make sense|can you|do you|क्या आप|समझ आया)\b/.test(t);
   }
 
   /**
@@ -79,47 +108,30 @@ export class GestureRouter {
   }
 
   /**
-   * Check if text contains warning keywords
+   * Check if text contains warning keywords (English + Hindi).
    */
   private static isWarning(text: string): boolean {
     const warningKeywords = [
-      'warning',
-      'caution',
-      'careful',
-      'avoid',
-      'don\'t',
-      'mistake',
-      'error',
-      'wrong',
-      'incorrect',
-      'beware',
+      'warning', 'caution', 'careful', 'avoid', "don't",
+      'mistake', 'error', 'wrong', 'incorrect', 'beware',
     ];
-
     const lowerText = text.toLowerCase();
-    return warningKeywords.some(keyword => lowerText.includes(keyword));
+    if (warningKeywords.some((k) => lowerText.includes(k))) return true;
+    return /(सावधान|गलत|गलती|बचें|न करें)/.test(text);
   }
 
   /**
-   * Check if text references an image
+   * Check if text references a visual aid (English + Hindi).
    */
   private static hasImageReference(text: string): boolean {
     const imageKeywords = [
-      'look at',
-      'see the',
-      'observe',
-      'notice',
-      'image',
-      'picture',
-      'diagram',
-      'chart',
-      'graph',
-      'illustration',
-      'example here',
-      'shown here',
+      'look at', 'see the', 'observe', 'notice', 'image', 'picture',
+      'diagram', 'chart', 'graph', 'illustration', 'example here', 'shown here',
+      'visual', 'figure',
     ];
-
     const lowerText = text.toLowerCase();
-    return imageKeywords.some(keyword => lowerText.includes(keyword));
+    if (imageKeywords.some((k) => lowerText.includes(k))) return true;
+    return /(देखो|देखिए|चित्र|आरेख|तस्वीर|छवि)/.test(text);
   }
 
   /**

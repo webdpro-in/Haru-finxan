@@ -17,7 +17,16 @@ export class ImageDetector {
     'show', 'visualize', 'draw', 'sketch', 'depict', 'display',
     'look at', 'see the', 'observe', 'view', 'example of',
     'appears', 'looks like', 'resembles', 'similar to',
-    'photo', 'photograph', 'scene', 'landscape', 'portrait'
+    'photo', 'photograph', 'scene', 'landscape', 'portrait',
+    // Math-specific
+    'equation', 'formula', 'shape', 'triangle', 'circle', 'square',
+    'geometry', 'angle', 'line', 'curve', 'plot', 'coordinate',
+    // Science-specific
+    'experiment', 'lab', 'microscope', 'telescope', 'specimen',
+    'reaction', 'element', 'compound', 'organism', 'species',
+    // General learning
+    'concept', 'idea', 'theory', 'model', 'representation',
+    'demonstration', 'exhibit', 'showcase', 'present'
   ];
 
   // Subjects that work well with images
@@ -27,7 +36,23 @@ export class ImageDetector {
     'animal', 'plant', 'flower', 'tree', 'bird',
     'building', 'architecture', 'structure', 'monument',
     'process', 'cycle', 'system', 'mechanism', 'workflow',
-    'anatomy', 'biology', 'chemistry', 'physics', 'geography'
+    'anatomy', 'biology', 'chemistry', 'physics', 'geography',
+    // Math concepts
+    'triangle', 'circle', 'square', 'rectangle', 'polygon',
+    'fraction', 'decimal', 'percentage', 'ratio', 'proportion',
+    'graph', 'coordinate', 'axis', 'slope', 'parabola',
+    // Science concepts
+    'photosynthesis', 'respiration', 'digestion', 'circulation',
+    'ecosystem', 'food chain', 'habitat', 'climate', 'weather',
+    'planet', 'star', 'galaxy', 'moon', 'sun', 'earth',
+    'volcano', 'earthquake', 'tsunami', 'hurricane', 'tornado',
+    // History/Geography
+    'map', 'country', 'continent', 'river', 'lake', 'sea',
+    'ancient', 'medieval', 'modern', 'civilization', 'empire',
+    'war', 'battle', 'revolution', 'independence', 'treaty',
+    // General
+    'book', 'school', 'classroom', 'teacher', 'student',
+    'computer', 'technology', 'machine', 'tool', 'instrument'
   ];
 
   /**

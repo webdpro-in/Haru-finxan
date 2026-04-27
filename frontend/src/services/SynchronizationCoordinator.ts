@@ -8,6 +8,8 @@ import { TeachingSegment } from '../types';
 import { motionManager } from './MotionManager';
 import { speechController } from './SpeechController';
 import { eyeController } from './EyeController';
+import { expressionController, ExpressionController } from './ExpressionController';
+import { idleAnimator } from './IdleAnimator';
 import { useAppStore } from '../store/useAppStore';
 
 export class SynchronizationCoordinator {
@@ -76,19 +78,27 @@ export class SynchronizationCoordinator {
       // 4. Play speech and gesture concurrently with strict sentence-by-sentence synchronization (CRITICAL)
       console.log('[SyncCoordinator] 🎤 Starting synchronized teaching playback');
       store.setSpeaking(true);
-      
+      idleAnimator.setSpeaking(true);
+
       for (let i = 0; i < segments.length; i++) {
         if (!this.isExecuting) {
           console.log('[SyncCoordinator] Execution interrupted mid-playback.');
           break; // Stop going through segments if interrupted
         }
-        
+
         const segment = segments[i];
         this.currentSegmentIndex = i;
-        
+        // Tell the rest of the app which paragraph is being spoken right now.
+        // VisualPanel listens to this to highlight the matching visual aid.
+        store.setCurrentSegmentIndex(i);
+
+        // Drive facial expression from segment text — curious/smile/thoughtful/etc.
+        const expr = ExpressionController.inferFromText(segment.content);
+        expressionController.setExpression(expr);
+
         // Trigger Gesture & Eye Contact
         if (segment.gesture) {
-          console.log(`[SyncCoordinator] Playing segment ${i} gesture: ${segment.gesture}`);
+          console.log(`[SyncCoordinator] Playing segment ${i} gesture: ${segment.gesture}, expr: ${expr}`);
           motionManager.requestGesture(segment.gesture);
 
           // Direct eyes mapping to UI layout strictly
@@ -105,23 +115,27 @@ export class SynchronizationCoordinator {
         // This ensures lip-sync naturally flows identically with the assigned localized gesture loop.
         await speechController.playAudio(segmentAudios[i]);
       }
-      
+
       console.log('[SyncCoordinator] ✅ Playback loop finished');
       store.setSpeaking(false);
+      idleAnimator.setSpeaking(false);
 
       // 5. Return to idle
       if (this.isExecuting) {
         await motionManager.returnToIdle();
         eyeController.lookCenter();
+        expressionController.setExpression('neutral', 600);
         console.log('[SyncCoordinator] 🎉 Teaching sequence naturally completed');
       }
 
     } catch (error) {
       console.error('[SyncCoordinator] ❌ Error in teaching sequence:', error);
       store.setSpeaking(false);
+      idleAnimator.setSpeaking(false);
       await motionManager.returnToIdle();
       eyeController.lookCenter();
-      
+      expressionController.setExpression('neutral', 600);
+
       // Show error to user
       store.setLeftPanelContent('Sorry, I encountered an error with speech synchronization. Please try again.');
     } finally {
@@ -154,8 +168,10 @@ export class SynchronizationCoordinator {
     // Stop motion
     motionManager.stop();
 
-    // Return eyes to center
+    // Return eyes + face to center neutral
     eyeController.lookCenter();
+    expressionController.setExpression('neutral', 250);
+    idleAnimator.setSpeaking(false);
 
     // Clear queue
     this.eventQueue = [];

@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { CreditCounter } from './CreditCounter';
+import { StreakCounter } from './StreakCounter';
 import { SubjectSelector, ModeToggle, LanguageToggle } from './SubjectSelector';
 import { AuthModal } from './AuthModal';
 import './Navbar.css';
@@ -39,6 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onSettingsClick }) 
         </div>
 
         <div className="navbar-actions">
+          <StreakCounter />
           <CreditCounter />
 
           {!user && (

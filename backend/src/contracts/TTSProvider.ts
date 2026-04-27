@@ -50,6 +50,7 @@ export interface TTSProvider {
   synthesize(
     text: string,
     voiceId: string,
-    languageCode: string
+    languageCode: string,
+    voiceGender?: 'male' | 'female',
   ): Promise<string>;
 }

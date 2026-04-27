@@ -29,7 +29,13 @@ export class ProviderRegistry {
 
   static async getTTSProvider(): Promise<TTSProvider> {
     if (!this.ttsProvider) {
-      this.ttsProvider = await this.createTTSProvider(process.env.TTS_PROVIDER || 'aws-polly');
+      // Priority: Sarvam (best for Indian languages) > ElevenLabs (multilingual) > AWS Polly
+      const envChoice = process.env.TTS_PROVIDER;
+      const choice =
+        envChoice ||
+        (process.env.SARVAM_API_KEY ? 'sarvam' :
+         process.env.ELEVENLABS_API_KEY ? 'elevenlabs' : 'aws-polly');
+      this.ttsProvider = await this.createTTSProvider(choice);
     }
     return this.ttsProvider;
   }
@@ -43,7 +49,13 @@ export class ProviderRegistry {
 
   static async getImageProvider(): Promise<ImageProvider> {
     if (!this.imageProvider) {
-      this.imageProvider = await this.createImageProvider(process.env.IMAGE_PROVIDER || 'pollinations');
+      // Pexels is the new default whenever a key is present (high-quality
+      // photographs).  Falls back to wikimedia if no Pexels key.
+      const envChoice = process.env.IMAGE_PROVIDER;
+      const choice =
+        envChoice ||
+        (process.env.PEXELS_API_KEY ? 'pexels' : 'wikimedia');
+      this.imageProvider = await this.createImageProvider(choice);
     }
     return this.imageProvider;
   }
@@ -69,12 +81,20 @@ export class ProviderRegistry {
 
   private static async createTTSProvider(name: string): Promise<TTSProvider> {
     switch (name) {
+      case 'sarvam': {
+        const { SarvamAdapter } = await import('./sarvam/SarvamAdapter.js');
+        return new SarvamAdapter();
+      }
+      case 'elevenlabs': {
+        const { ElevenLabsAdapter } = await import('./elevenlabs/ElevenLabsAdapter.js');
+        return new ElevenLabsAdapter();
+      }
       case 'aws-polly': {
         const { AWSPollyAdapter } = await import('./aws/AWSPollyAdapter.js');
         return new AWSPollyAdapter();
       }
       default:
-        throw new Error(`Unknown TTS provider: ${name}. Available: aws-polly`);
+        throw new Error(`Unknown TTS provider: ${name}. Available: sarvam, elevenlabs, aws-polly`);
     }
   }
 
@@ -91,6 +111,14 @@ export class ProviderRegistry {
 
   private static async createImageProvider(name: string): Promise<ImageProvider> {
     switch (name) {
+      case 'pexels': {
+        const { PexelsImageAdapter } = await import('./pexels/PexelsImageAdapter.js');
+        return new PexelsImageAdapter();
+      }
+      case 'wikimedia': {
+        const { WikimediaImageAdapter } = await import('./wikimedia/WikimediaImageAdapter.js');
+        return new WikimediaImageAdapter();
+      }
       case 'pollinations': {
         const { PollinationsImageAdapter } = await import('./pollinations/PollinationsImageAdapter.js');
         return new PollinationsImageAdapter();
@@ -104,7 +132,7 @@ export class ProviderRegistry {
         return new FreepikImageAdapter();
       }
       default:
-        throw new Error(`Unknown Image provider: ${name}. Available: pollinations, openrouter, freepik`);
+        throw new Error(`Unknown Image provider: ${name}. Available: pexels, wikimedia, pollinations, openrouter, freepik`);
     }
   }
 

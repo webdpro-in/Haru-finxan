@@ -18,7 +18,9 @@ export type GestureType =
   | 'pointLeft'
   | 'pointRight'
   | 'emphasis'
-  | 'warning';
+  | 'warning'
+  | 'nodding'      // affirmation / "yes that's right" — head nod
+  | 'thinking';    // "let me think" / Socratic pause
 
 export type HaruState =
   | 'idle'

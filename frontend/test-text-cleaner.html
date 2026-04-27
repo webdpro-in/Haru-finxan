@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Cleaner Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-case {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #f9f9f9;
+    }
+    .original {
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .cleaned {
+      color: #2c5;
+      font-weight: bold;
+    }
+    h1 {
+      color: #333;
+    }
+    button {
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>Text Cleaner for TTS - Test Cases</h1>
+  
+  <div id="test-results"></div>
+
+  <script type="module">
+    // Import the text cleaner functions
+    import { cleanTextForTTS, mathSymbolsToWords } from './src/utils/textCleaner.ts';
+
+    const testCases = [
+      {
+        name: "Special characters (should be removed)",
+        input: "Hello! How are you? @user #hashtag $money",
+        expected: "Special chars removed, only English words remain"
+      },
+      {
+        name: "Math expression (symbols preserved)",
+        input: "What is 5 + 3?",
+        expected: "Math symbols converted to words"
+      },
+      {
+        name: "Complex math",
+        input: "Calculate 10 * 2 - 5 = ?",
+        expected: "All math symbols converted"
+      },
+      {
+        name: "Mixed content",
+        input: "Hey! The answer is 7 + 3 = 10. Cool, right? @teacher",
+        expected: "Special chars removed, math preserved"
+      },
+      {
+        name: "Percentage",
+        input: "You scored 95% on the test!",
+        expected: "Percentage symbol converted"
+      },
+      {
+        name: "Currency",
+        input: "The book costs $25 and the pen costs $5",
+        expected: "Dollar signs handled"
+      }
+    ];
+
+    const resultsDiv = document.getElementById('test-results');
+
+    testCases.forEach(testCase => {
+      const cleaned = cleanTextForTTS(testCase.input);
+      const withWords = mathSymbolsToWords(cleaned);
+      
+      const div = document.createElement('div');
+      div.className = 'test-case';
+      div.innerHTML = `
+        <h3>${testCase.name}</h3>
+        <div class="original"><strong>Original:</strong> ${testCase.input}</div>
+        <div class="cleaned"><strong>After cleaning:</strong> ${cleaned}</div>
+        <div class="cleaned"><strong>With math words:</strong> ${withWords}</div>
+        <button onclick="speakText('${withWords.replace(/'/g, "\\'")}')">🔊 Speak This</button>
+      `;
+      resultsDiv.appendChild(div);
+    });
+
+    // Make speak function global
+    window.speakText = function(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert('Speech synthesis not supported in this browser');
+      }
+    };
+  </script>
+</body>
+</html>

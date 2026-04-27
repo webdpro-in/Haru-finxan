@@ -51,6 +51,7 @@ export const DebugPanel: React.FC = () => {
   if (!isVisible) return null;
 
   const currentMotion = motionManager.getCurrentMotion();
+  const currentMotionLabel = `${currentMotion.group || 'default'}[${currentMotion.index}]`;
 
   return (
     <div className="debug-panel">
@@ -73,7 +74,7 @@ export const DebugPanel: React.FC = () => {
             </div>
             <div className="debug-item">
               <span className="label">Current Motion:</span>
-              <span className="value">{currentMotion}</span>
+              <span className="value">{currentMotionLabel}</span>
             </div>
             <div className="debug-item">
               <span className="label">Recording:</span>
