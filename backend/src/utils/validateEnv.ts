@@ -15,7 +15,12 @@ class EnvironmentValidator {
     this.errors = [];
     this.warnings = [];
 
-    this.required('JWT_SECRET', 32);
+    // Auto-generate JWT_SECRET if not provided (for easy deployment)
+    if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+      const crypto = require('crypto');
+      process.env.JWT_SECRET = crypto.randomBytes(32).toString('hex');
+      console.warn('⚠️  JWT_SECRET auto-generated. Set JWT_SECRET environment variable for production!');
+    }
 
     const aiProvider = process.env.AI_PROVIDER || 'groq';
     if (!['groq', 'gemini', 'openai'].includes(aiProvider)) {
