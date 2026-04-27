@@ -2,6 +2,8 @@
  * Validate environment variables at startup. Errors abort boot; warnings log only.
  */
 
+import { randomBytes } from 'crypto';
+
 interface ValidationError {
   variable: string;
   message: string;
@@ -17,8 +19,7 @@ class EnvironmentValidator {
 
     // Auto-generate JWT_SECRET if not provided (for easy deployment)
     if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-      const crypto = require('crypto');
-      process.env.JWT_SECRET = crypto.randomBytes(32).toString('hex');
+      process.env.JWT_SECRET = randomBytes(32).toString('hex');
       console.warn('⚠️  JWT_SECRET auto-generated. Set JWT_SECRET environment variable for production!');
     }
 
